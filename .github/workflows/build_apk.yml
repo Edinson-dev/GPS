@@ -33,7 +33,7 @@ jobs:
       - name: Configure Mapbox Gradle Credentials
         run: |
           mkdir -p ~/.gradle
-          TOKEN=$(echo "c2suZXlKMWFYTWlPaUpqYlhNMk5UY3laRGd3TTFRdmJuaHdkamd6YVRaa2JtR3ZJbjAuR0EzczhSYVk3WWFBeW9BdEE1RzdpUQ==" | base64 -d)
+          TOKEN=$(echo "c2suZXlKMUlqb2laV1JwYm5OdmJpMHhNaUlzSW1FaU9pSmpiWE0yTlRjeVpEZ3dNM0Z2TW5od2RqZ3phVFpqYjNGdkluMC5HQTNzOFJhWTdZZkF5b0F0QTVHN2lR" | base64 -d)
           echo "MAPBOX_DOWNLOADS_TOKEN=$TOKEN" >> ~/.gradle/gradle.properties
 
       - name: Build Release APK
