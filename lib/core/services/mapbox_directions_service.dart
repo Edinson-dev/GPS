@@ -58,6 +58,28 @@ class MapboxRoute {
     required this.steps,
     required this.isEcoFriendly,
   });
+
+  MapboxRoute copyWith({
+    String? id,
+    String? name,
+    double? distanceMeters,
+    double? durationSeconds,
+    double? ecoScore,
+    List<LatLng>? polylinePoints,
+    List<RouteStep>? steps,
+    bool? isEcoFriendly,
+  }) {
+    return MapboxRoute(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      ecoScore: ecoScore ?? this.ecoScore,
+      polylinePoints: polylinePoints ?? this.polylinePoints,
+      steps: steps ?? this.steps,
+      isEcoFriendly: isEcoFriendly ?? this.isEcoFriendly,
+    );
+  }
 }
 
 class MapboxDirectionsService {

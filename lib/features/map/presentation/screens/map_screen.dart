@@ -66,9 +66,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Escuchar cambios en la ruta o ubicación para auto-centrar o encuadrar vista previa de ruta
     ref.listen(navigationProvider, (previous, next) {
-      if (next.currentLocation != null && !_hasCenteredInitialPos) {
-        _hasCenteredInitialPos = true;
-        _mapController.move(next.currentLocation!.position, 16.5);
+      if (next.currentLocation != null) {
+        if (!_hasCenteredInitialPos) {
+          _hasCenteredInitialPos = true;
+          _mapController.move(next.currentLocation!.position, 16.5);
+        } else if (previous?.currentLocation?.position != next.currentLocation?.position) {
+          // Seguir dinámicamente al usuario mientras camina o conduce por la ruta
+          _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+        }
       }
 
       if (next.selectedRoute != null && next.destination != null && previous?.selectedRoute != next.selectedRoute) {
@@ -135,6 +140,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
+                  keepBuffer: 3,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 150)),
                 ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(
@@ -323,7 +330,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Overlay Izquierdo: Velocímetro (Se oculta al desplegar lista de búsqueda para no estorbar)
           if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
             Positioned(
-              top: topInset + 105,
+              top: topInset + 120,
               left: 12,
               child: SpeedLimitBadge(
                 currentSpeedKmh: currentSpeed,
@@ -334,7 +341,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Overlay Derecho: Controles del Mapa 2D/3D (Se oculta al buscar para no tapar los resultados)
           if (!_isSearchingDropdownOpen)
             Positioned(
-              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 105),
+              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 120),
               right: 12,
               child: MapControlsWidget(
                 is3DMode: _is3DMode,

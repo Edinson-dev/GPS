@@ -89,7 +89,30 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   }
 
   void setTransportMode(TransportMode mode) {
-    state = state.copyWith(selectedTransportMode: mode);
+    double speedLimit = 80.0;
+    switch (mode) {
+      case TransportMode.car:
+        speedLimit = 80.0;
+        break;
+      case TransportMode.moto:
+        speedLimit = 60.0;
+        break;
+      case TransportMode.bike:
+        speedLimit = 30.0;
+        break;
+      case TransportMode.walk:
+        speedLimit = 6.0;
+        break;
+      case TransportMode.transit:
+        speedLimit = 40.0;
+        break;
+    }
+
+    state = state.copyWith(
+      selectedTransportMode: mode,
+      currentSpeedLimit: speedLimit,
+    );
+
     if (state.destination != null) {
       calculateRoutesTo(state.destination!, state.destinationName);
     }
@@ -99,10 +122,41 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     _locationService.getRealtimeLocationStream().listen((userLoc) {
       state = state.copyWith(currentLocation: userLoc);
 
+      if (state.selectedRoute != null) {
+        _updateTrimmedRoute(userLoc);
+      }
+
       if (state.isNavigating && state.selectedRoute != null) {
         _checkStepProgress(userLoc);
       }
     });
+  }
+
+  void _updateTrimmedRoute(UserLocation userLoc) {
+    final route = state.selectedRoute;
+    if (route == null) return;
+    final pts = route.polylinePoints;
+    if (pts.length < 2) return;
+
+    // Encontrar el punto de la polilínea más cercano a la ubicación actual del usuario
+    int closestIdx = 0;
+    double minDistance = double.infinity;
+    const distance = Distance();
+
+    for (int i = 0; i < pts.length; i++) {
+      final d = distance.as(LengthUnit.Meter, userLoc.position, pts[i]);
+      if (d < minDistance) {
+        minDistance = d;
+        closestIdx = i;
+      }
+    }
+
+    // Si el usuario avanza por la ruta, recortar los puntos ya recorridos
+    if (closestIdx > 0 && closestIdx < pts.length - 1) {
+      final remainingPts = [userLoc.position, ...pts.sublist(closestIdx)];
+      final updatedRoute = route.copyWith(polylinePoints: remainingPts);
+      state = state.copyWith(selectedRoute: updatedRoute);
+    }
   }
 
   void _checkStepProgress(UserLocation userLoc) {
