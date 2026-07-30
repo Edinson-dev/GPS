@@ -7,6 +7,7 @@ import '../../../../core/constants/mapbox_constants.dart';
 import '../../../../core/constants/colombia_tolls_database.dart';
 import '../../../../core/constants/speed_camera_database.dart';
 import '../../../../core/constants/colombia_gas_stations_database.dart';
+import '../../../../core/services/speed_camera_api_service.dart';
 import '../../../../core/services/tts_voice_service.dart';
 import '../../../navigation/providers/navigation_provider.dart';
 import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
@@ -30,6 +31,9 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   late final MapController _mapController;
+  final SpeedCameraApiService _cameraApiService = SpeedCameraApiService();
+  List<SpeedCameraItem> _liveSpeedCameras = SpeedCameraDatabase.cameras;
+
   bool _is3DMode = true;
   int _styleIndex = 0;
   bool _hasCenteredInitialPos = false;
@@ -55,6 +59,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     _mapController = MapController();
+    _loadLiveSpeedCameras();
+  }
+
+  void _loadLiveSpeedCameras() async {
+    final fetched = await _cameraApiService.fetchLiveSpeedCameras();
+    if (mounted && fetched.isNotEmpty) {
+      setState(() {
+        _liveSpeedCameras = fetched;
+      });
+    }
   }
 
   @override
@@ -346,8 +360,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcadores de Cámaras de Fotomultas en Medellín
-                    ...SpeedCameraDatabase.cameras.map(
+                    // Marcadores de Cámaras de Fotomultas en Medellín & Colombia (Cargadas vía API en Vivo)
+                    ..._liveSpeedCameras.map(
                       (cam) => Marker(
                         point: cam.position,
                         width: 36,
