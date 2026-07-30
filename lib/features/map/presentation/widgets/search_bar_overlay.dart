@@ -180,37 +180,40 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFF334155)),
             ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: _searchResults.length,
-              separatorBuilder: (_, __) => const Divider(color: Color(0xFF334155), height: 1),
-              itemBuilder: (context, index) {
-                final item = _searchResults[index];
-                return ListTile(
-                  dense: true,
-                  leading: const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Color(0xFF00C8FF),
-                    child: Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
-                  ),
-                  title: Text(
-                    item.title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    item.address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                  ),
-                  onTap: () {
-                    widget.onPlaceSelected(item.position, item.title);
-                    _controller.clear();
-                    setState(() => _searchResults = []);
-                    widget.onSearchingStateChanged?.call(false);
-                  },
-                );
-              },
+            child: Material(
+              color: Colors.transparent,
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _searchResults.length,
+                separatorBuilder: (_, __) => const Divider(color: Color(0xFF334155), height: 1),
+                itemBuilder: (context, index) {
+                  final item = _searchResults[index];
+                  return ListTile(
+                    dense: true,
+                    leading: const CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Color(0xFF00C8FF),
+                      child: Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
+                    ),
+                    title: Text(
+                      item.title,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      item.address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                    ),
+                    onTap: () {
+                      widget.onPlaceSelected(item.position, item.title);
+                      _controller.clear();
+                      setState(() => _searchResults = []);
+                      widget.onSearchingStateChanged?.call(false);
+                    },
+                  );
+                },
+              ),
             ),
           ),
       ],
