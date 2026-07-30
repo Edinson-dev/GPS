@@ -31,7 +31,7 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>WayPulse requiere acceso a la ubicación en segundo plano para alertas de velocidad e incidentes cercanos.</string>
 	<key>MBXAccessToken</key>
-	<string>YOUR_MAPBOX_PUBLIC_TOKEN</string>
+	<string>pk.eyJ1IjoiZWRpbnNvbi0xMiIsImEiOiJjbXMxOHgxejUxMnpzMnpvbWdweTljOW1vIn0.6r87a3AMuOf3rH-CdKkSNg</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

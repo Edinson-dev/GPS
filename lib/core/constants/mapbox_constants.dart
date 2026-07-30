@@ -1,7 +1,7 @@
 class MapboxConstants {
   // Tokens configurados por el desarrollador
   static const String publicToken =
-      String.fromEnvironment('MAPBOX_PUBLIC_TOKEN', defaultValue: 'YOUR_MAPBOX_PUBLIC_TOKEN');
+      'pk.eyJ1IjoiZWRpbnNvbi0xMiIsImEiOiJjbXMxOHgxejUxMnpzMnpvbWdweTljOW1vIn0.6r87a3AMuOf3rH-CdKkSNg';
       
   static const String secretToken =
       'YOUR_MAPBOX_SECRET_TOKEN';

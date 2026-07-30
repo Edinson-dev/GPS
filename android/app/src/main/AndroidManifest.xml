@@ -37,7 +37,7 @@
         <!-- Token Público de Mapbox para Android -->
         <meta-data
             android:name="com.mapbox.token"
-            android:value="YOUR_MAPBOX_PUBLIC_TOKEN" />
+            android:value="pk.eyJ1IjoiZWRpbnNvbi0xMiIsImEiOiJjbXMxOHgxejUxMnpzMnpvbWdweTljOW1vIn0.6r87a3AMuOf3rH-CdKkSNg" />
 
         <meta-data
             android:name="flutterEmbedding"
