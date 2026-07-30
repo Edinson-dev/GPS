@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import '../../../../core/constants/mapbox_constants.dart';
 import '../../../navigation/providers/navigation_provider.dart';
@@ -132,6 +133,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 TileLayer(
                   urlTemplate: _tileStyles[_styleIndex],
                   userAgentPackageName: 'com.waypulse.waypulse_app',
+                  tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
                 ),
                 if (navState.selectedRoute != null) ...[
