@@ -7,6 +7,8 @@ import '../../incidents/models/incident_model.dart';
 
 import '../../../core/services/pico_placa_service.dart';
 
+import '../../../core/services/realtime_incident_service.dart';
+
 enum TransportMode { car, moto, bike, walk, transit }
 
 class NavigationState {
@@ -40,7 +42,7 @@ class NavigationState {
     this.selectedCity = ColombianCity.medellin,
   });
 
-  PicoPlacaResult get picoPlacaResult {
+  PicoPlacaResult? get picoPlacaResult {
     return PicoPlacaService().checkRestriction(
       plateLastDigit: vehiclePlateDigit,
       city: selectedCity,
@@ -84,11 +86,19 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   final MapboxDirectionsService _directionsService = MapboxDirectionsService();
   final LocationService _locationService = LocationService();
   final TtsVoiceService _ttsService = TtsVoiceService();
+  final RealtimeIncidentService _realtimeIncidentService = RealtimeIncidentService();
 
   NavigationNotifier() : super(NavigationState()) {
     _initLocationListener();
+    _initCloudIncidentsListener();
     _loadInitialMockIncidents();
     requestInitialLocation();
+  }
+
+  void _initCloudIncidentsListener() {
+    _realtimeIncidentService.incidentsStream.listen((cloudIncidents) {
+      state = state.copyWith(activeIncidents: cloudIncidents);
+    });
   }
 
   Future<void> requestInitialLocation() async {
@@ -264,7 +274,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   }
 
   void reportIncident(IncidentType type, String description) {
-    final pos = state.currentLocation?.position ?? const LatLng(4.60971, -74.08175);
+    final pos = state.currentLocation?.position ?? const LatLng(6.2494, -75.5681);
     final newIncident = IncidentReport(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: type,
@@ -274,13 +284,21 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       timestamp: DateTime.now(),
     );
 
-    final updatedIncidents = [...state.activeIncidents, newIncident];
+    // Publicar a la base de datos en tiempo real en la nube para que otros usuarios lo vean al instante
+    _realtimeIncidentService.publishIncident(newIncident);
+
     state = state.copyWith(
-      activeIncidents: updatedIncidents,
       pulsePoints: state.pulsePoints + 15, // Recompensa gamificada de puntos
     );
 
     _ttsService.speakInstruction('Gracias por reportar. Has ganado 15 Pulse Points.');
+  }
+
+  void voteIncident(String incidentId, bool isPositive) {
+    _realtimeIncidentService.voteIncident(incidentId, isPositive);
+    if (isPositive) {
+      state = state.copyWith(pulsePoints: state.pulsePoints + 5);
+    }
   }
 
   void setVehiclePlateDigit(int digit) {

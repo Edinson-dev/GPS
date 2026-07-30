@@ -278,8 +278,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                     label: const Text('Ya no está', style: TextStyle(color: Color(0xFFFF2E55))),
                                     onPressed: () {
                                       Navigator.pop(ctx);
+                                      navNotifier.voteIncident(inc.id, false);
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Gracias por verificar en tiempo real. Reporte actualizado.')),
+                                        const SnackBar(content: Text('Gracias por desmentir en tiempo real. Reporte retirado.')),
                                       );
                                     },
                                   ),
@@ -289,6 +290,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                     label: const Text('Confirmar (+5 pts)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                                     onPressed: () {
                                       Navigator.pop(ctx);
+                                      navNotifier.voteIncident(inc.id, true);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(content: Text('¡Confirmado! Ganaste +5 PulsePoints comunitarios.')),
                                       );
@@ -298,7 +300,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               ),
                             );
                           },
-                        child: Container(
+                          child: Container(
                             decoration: BoxDecoration(
                               color: inc.color,
                               shape: BoxShape.circle,
