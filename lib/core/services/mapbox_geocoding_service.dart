@@ -73,25 +73,26 @@ class MapboxGeocodingService {
     // Formatear dirección colombiana (ej: "cra 71 c # 89 a 13" -> "Carrera 71C #89A-13")
     final expandedQuery = _normalizeColombianAddress(trimmed);
 
+    // Si la ubicación del usuario no está disponible, anclar la proximidad al centro de Medellín/Valle de Aburrá
+    final effectiveProximity = proximity ?? const LatLng(6.2494, -75.5681);
+
     final url = '${MapboxConstants.geocodingBaseUrl}/${Uri.encodeComponent(expandedQuery)}.json';
     final queryParams = {
       'access_token': MapboxConstants.publicToken,
       'autocomplete': 'true',
-      'limit': '6',
+      'limit': '10',
       'language': 'es',
       'country': 'co', // Restringir a Colombia
+      'proximity': '${effectiveProximity.longitude},${effectiveProximity.latitude}',
+      'types': 'neighborhood,address,poi,place,locality',
     };
-
-    if (proximity != null) {
-      queryParams['proximity'] = '${proximity.longitude},${proximity.latitude}';
-    }
 
     try {
       final response = await _dio.get(url, queryParameters: queryParams);
 
       if (response.statusCode == 200 && response.data['features'] != null) {
         final features = response.data['features'] as List;
-        final onlineResults = features.map((f) {
+        final List<SearchLocationResult> onlineResults = features.map((f) {
           final center = f['center'] as List;
           String rawAddress = f['place_name'] ?? f['text'] ?? '';
 
@@ -111,6 +112,14 @@ class MapboxGeocodingService {
             ),
           );
         }).toList();
+
+        // Ordenar los resultados online por cercanía a la ubicación actual / Medellín
+        const distance = Distance();
+        onlineResults.sort((a, b) {
+          final distA = distance.as(LengthUnit.Meter, effectiveProximity, a.position);
+          final distB = distance.as(LengthUnit.Meter, effectiveProximity, b.position);
+          return distA.compareTo(distB);
+        });
 
         results.addAll(onlineResults);
         return results;

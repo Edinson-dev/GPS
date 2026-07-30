@@ -241,6 +241,80 @@ class ColombiaPoiDatabase {
     ),
 
     // ----------------------------------------------------
+    // BARRIOS Y COMUNAS DEL VALLE DE ABURRÁ Y COLOMBIA
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Barrio Alfonso López',
+      address: 'Medellín, Antioquia (Comuna 5 - Castilla)',
+      category: 'neighborhood',
+      position: const LatLng(6.2875, -75.5678),
+      keywords: ['alfonso lopez', 'barrio alfonso lopez', 'castilla', 'comuna 5'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio El Poblado',
+      address: 'Medellín, Antioquia (Comuna 14)',
+      category: 'neighborhood',
+      position: const LatLng(6.2089, -75.5678),
+      keywords: ['poblado', 'el poblado', 'comuna 14'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Laureles',
+      address: 'Medellín, Antioquia (Comuna 11)',
+      category: 'neighborhood',
+      position: const LatLng(6.2442, -75.5908),
+      keywords: ['laureles', 'barrio laureles', 'comuna 11'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Belén',
+      address: 'Medellín, Antioquia (Comuna 16)',
+      category: 'neighborhood',
+      position: const LatLng(6.2308, -75.5964),
+      keywords: ['belen', 'barrio belen', 'comuna 16'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Robledo',
+      address: 'Medellín, Antioquia (Comuna 7)',
+      category: 'neighborhood',
+      position: const LatLng(6.2750, -75.5917),
+      keywords: ['robledo', 'barrio robledo', 'comuna 7'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Envigado Centro',
+      address: 'Envigado, Antioquia (Parque Principal Envigado)',
+      category: 'neighborhood',
+      position: const LatLng(6.1706, -75.5861),
+      keywords: ['envigado', 'parque envigado', 'envigado centro'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Sabaneta Cañaveralejo',
+      address: 'Sabaneta, Antioquia (Parque de Sabaneta)',
+      category: 'neighborhood',
+      position: const LatLng(6.1517, -75.6156),
+      keywords: ['sabaneta', 'parque sabaneta', 'sabaneta centro'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Itagüí Centro',
+      address: 'Itagüí, Antioquia (Parque Principal Itagüí)',
+      category: 'neighborhood',
+      position: const LatLng(6.1728, -75.6094),
+      keywords: ['itagui', 'parque itagui', 'itagui centro'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Alfonso López (Cali)',
+      address: 'Cali, Valle del Cauca (Comuna 7)',
+      category: 'neighborhood',
+      position: const LatLng(3.4611, -76.4972),
+      keywords: ['alfonso lopez cali', 'barrio alfonso lopez cali'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Alfonso López (Bogotá)',
+      address: 'Bogotá, D.C. (Usme)',
+      category: 'neighborhood',
+      position: const LatLng(4.5125, -74.1167),
+      keywords: ['alfonso lopez bogota', 'barrio alfonso lopez bogota'],
+    ),
+
+    // ----------------------------------------------------
     // CENTROS COMERCIALES Y PUNTOS DE INTERÉS CLAVE
     // ----------------------------------------------------
     LocalPoiItem(
@@ -248,7 +322,7 @@ class ColombiaPoiDatabase {
       address: 'Sabaneta / Itagüí (Calle 51 Sur # 48-57)',
       category: 'mall',
       position: const LatLng(6.1625, -75.5964),
-      keywords: ['mayorca', 'centro comercial mayorca', 'sabanaeta', 'itagui'],
+      keywords: ['mayorca', 'centro comercial mayorca', 'sabaneta', 'itagui'],
     ),
     LocalPoiItem(
       title: 'Centro Comercial Viva Envigado',
