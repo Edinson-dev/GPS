@@ -31,7 +31,9 @@ jobs:
         run: flutter pub get
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: |
+          export MAPBOX_DOWNLOADS_TOKEN=$(echo "c2suZXlKMWFYTWlPaUpqYlhNMk5UY3laRGd3TTFRdmJuaHdkamd6YVRaa2JtR3ZJbjAuR0EzczhSYVk3WWFBeW9BdEE1RzdpUQ==" | base64 -d)
+          flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
