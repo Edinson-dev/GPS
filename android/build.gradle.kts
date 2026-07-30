@@ -2,6 +2,22 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://storage.googleapis.com/download.flutter.io")
+        }
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                username = "mapbox"
+                password = project.findProperty("MAPBOX_DOWNLOADS_TOKEN") as String?
+                    ?: System.getenv("MAPBOX_DOWNLOADS_TOKEN")
+                    ?: System.getenv("ORG_GRADLE_PROJECT_MAPBOX_DOWNLOADS_TOKEN")
+                    ?: ""
+            }
+        }
     }
 }
 
