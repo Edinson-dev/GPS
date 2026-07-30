@@ -1,0 +1,309 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import '../../../../core/constants/mapbox_constants.dart';
+import '../../../navigation/providers/navigation_provider.dart';
+import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
+import '../widgets/speed_limit_badge.dart';
+import '../widgets/map_controls.dart';
+import '../widgets/search_bar_overlay.dart';
+import '../../../incidents/presentation/widgets/incident_fab_button.dart';
+import '../../../incidents/presentation/widgets/report_incident_modal.dart';
+import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
+
+class MapScreen extends ConsumerStatefulWidget {
+  const MapScreen({super.key});
+
+  @override
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  bool _is3DMode = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb) {
+      mapbox.MapboxOptions.setAccessToken(MapboxConstants.publicToken);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final navState = ref.watch(navigationProvider);
+    final navNotifier = ref.read(navigationProvider.notifier);
+
+    // Si la navegación activa está iniciada, cambia al modo de conducción 3D
+    if (navState.isNavigating) {
+      return const NavigationModeScreen();
+    }
+
+    final currentPos = navState.currentLocation?.position ??
+        const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
+    final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Capa de Mapa: Mapbox Nativo en Android/iOS y Mosaicos Mapbox Web (FlutterMap) en Chrome
+          Positioned.fill(
+            child: !kIsWeb
+                ? mapbox.MapWidget(
+                    key: const ValueKey('mapboxMap'),
+                    styleUri: _is3DMode
+                        ? MapboxConstants.styleStreets
+                        : MapboxConstants.styleLight,
+                    cameraOptions: mapbox.CameraOptions(
+                      center: mapbox.Point(
+                        coordinates: mapbox.Position(
+                          currentPos.longitude,
+                          currentPos.latitude,
+                        ),
+                      ).toJson(),
+                      zoom: MapboxConstants.defaultZoom,
+                      pitch: _is3DMode ? 45.0 : 0.0,
+                    ),
+                    onMapCreated: (map) {
+                      // MapboxMap controller
+                    },
+                  )
+                : FlutterMap(
+                    options: MapOptions(
+                      initialCenter: currentPos,
+                      initialZoom: MapboxConstants.defaultZoom,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
+                        userAgentPackageName: 'com.waypulse.waypulse_app',
+                      ),
+                      if (navState.selectedRoute != null)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: navState.selectedRoute!.polylinePoints,
+                              color: const Color(0xFF00C8FF),
+                              strokeWidth: 6.0,
+                            ),
+                          ],
+                        ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: currentPos,
+                            width: 44,
+                            height: 44,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00C8FF),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00C8FF).withOpacity(0.5),
+                                    blurRadius: 12,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.navigation_rounded,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                          ...navState.activeIncidents.map(
+                            (inc) => Marker(
+                              point: inc.position,
+                              width: 36,
+                              height: 36,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFF2E55),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+
+          // Overlay Superior: Barra de Búsqueda de Destino
+          Positioned(
+            top: 50,
+            left: 16,
+            right: 16,
+            child: SearchBarOverlay(
+              pulsePoints: navState.pulsePoints,
+              onPlaceSelected: (pos, name) {
+                navNotifier.calculateRoutesTo(pos, name);
+              },
+            ),
+          ),
+
+          // Overlay Izquierdo: Velocímetro y Alerta de Velocidad
+          Positioned(
+            top: 130,
+            left: 16,
+            child: SpeedLimitBadge(
+              currentSpeedKmh: currentSpeed,
+              speedLimitKmh: navState.currentSpeedLimit,
+            ),
+          ),
+
+          // Overlay Derecho: Controles del Mapa (2D/3D, Recentrar, Capas)
+          Positioned(
+            top: 130,
+            right: 16,
+            child: MapControlsWidget(
+              is3DMode: _is3DMode,
+              onToggle3D: () => setState(() => _is3DMode = !_is3DMode),
+              onRecenter: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Recentrado en tu posición GPS actual'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+              onToggleLayers: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Capa de Tráfico y Terreno 3D Mapbox Activa'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Overlay Inferior Central: Botón FAB de Reporte de Alertas Waze
+          if (navState.availableRoutes.isEmpty)
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: IncidentFabButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) => ReportIncidentModal(
+                        onReport: (type, desc) {
+                          navNotifier.reportIncident(type, desc);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+          // Overlay Inferior Deslizable: Selector de Rutas Eco vs Rápidas
+          if (navState.availableRoutes.isNotEmpty)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: RouteSelectorSheet(
+                routes: navState.availableRoutes,
+                selectedRoute: navState.selectedRoute,
+                onSelect: (route) => navNotifier.selectRoute(route),
+                onStartNavigation: () => navNotifier.startNavigation(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// CustomPainter para la renderización de la red del mapa, cuadrículas de avenidas y trazado de rutas
+class MapGridPainter extends CustomPainter {
+  final LatLng userPosition;
+  final List routes;
+  final dynamic selectedRoute;
+  final List incidents;
+  final bool is3D;
+
+  MapGridPainter({
+    required this.userPosition,
+    required this.routes,
+    required this.selectedRoute,
+    required this.incidents,
+    required this.is3D,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Fondo oscuro con rejilla estética de ciudad
+    final gridPaint = Paint()
+      ..color = const Color(0xFF1E293B).withOpacity(0.5)
+      ..strokeWidth = 1.0;
+
+    for (double i = 0; i < size.width; i += 40) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), gridPaint);
+    }
+    for (double i = 0; i < size.height; i += 40) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), gridPaint);
+    }
+
+    // Dibujo de avenidas principales
+    final roadPaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..strokeWidth = 14.0
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(Offset(0, center.dy), Offset(size.width, center.dy), roadPaint);
+    canvas.drawLine(Offset(center.dx, 0), Offset(center.dx, size.height), roadPaint);
+
+    // Si hay una ruta seleccionada, dibujamos la línea brillante de dirección Mapbox Neon
+    if (selectedRoute != null) {
+      final routePaint = Paint()
+        ..color = const Color(0xFF00C8FF)
+        ..strokeWidth = 8.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+
+      final path = Path();
+      path.moveTo(center.dx, center.dy);
+      path.quadraticBezierTo(
+        center.dx + 80,
+        center.dy - 120,
+        center.dx + 120,
+        center.dy - 250,
+      );
+
+      canvas.drawPath(path, routePaint);
+    }
+
+    // Dibujo del marcador del auto del usuario en el centro (Icono estilo Waze)
+    final carPaint = Paint()..color = const Color(0xFF00C8FF);
+    final glowPaint = Paint()
+      ..color = const Color(0xFF00C8FF).withOpacity(0.3)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+
+    canvas.drawCircle(center, 22, glowPaint);
+    canvas.drawCircle(center, 12, carPaint);
+    canvas.drawCircle(center, 6, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}

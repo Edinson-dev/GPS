@@ -1,0 +1,213 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/services/location_service.dart';
+import '../../../core/services/mapbox_directions_service.dart';
+import '../../../core/services/tts_voice_service.dart';
+import '../../incidents/models/incident_model.dart';
+
+class NavigationState {
+  final UserLocation? currentLocation;
+  final LatLng? destination;
+  final String destinationName;
+  final List<MapboxRoute> availableRoutes;
+  final MapboxRoute? selectedRoute;
+  final bool isNavigating;
+  final int currentStepIndex;
+  final double currentSpeedLimit;
+  final List<IncidentReport> activeIncidents;
+  final int pulsePoints;
+
+  NavigationState({
+    this.currentLocation,
+    this.destination,
+    this.destinationName = '',
+    this.availableRoutes = const [],
+    this.selectedRoute,
+    this.isNavigating = false,
+    this.currentStepIndex = 0,
+    this.currentSpeedLimit = 80.0,
+    this.activeIncidents = const [],
+    this.pulsePoints = 140,
+  });
+
+  NavigationState copyWith({
+    UserLocation? currentLocation,
+    LatLng? destination,
+    String? destinationName,
+    List<MapboxRoute>? availableRoutes,
+    MapboxRoute? selectedRoute,
+    bool? isNavigating,
+    int? currentStepIndex,
+    double? currentSpeedLimit,
+    List<IncidentReport>? activeIncidents,
+    int? pulsePoints,
+  }) {
+    return NavigationState(
+      currentLocation: currentLocation ?? this.currentLocation,
+      destination: destination ?? this.destination,
+      destinationName: destinationName ?? this.destinationName,
+      availableRoutes: availableRoutes ?? this.availableRoutes,
+      selectedRoute: selectedRoute ?? this.selectedRoute,
+      isNavigating: isNavigating ?? this.isNavigating,
+      currentStepIndex: currentStepIndex ?? this.currentStepIndex,
+      currentSpeedLimit: currentSpeedLimit ?? this.currentSpeedLimit,
+      activeIncidents: activeIncidents ?? this.activeIncidents,
+      pulsePoints: pulsePoints ?? this.pulsePoints,
+    );
+  }
+}
+
+class NavigationNotifier extends StateNotifier<NavigationState> {
+  final MapboxDirectionsService _directionsService = MapboxDirectionsService();
+  final LocationService _locationService = LocationService();
+  final TTSVoiceService _ttsService = TTSVoiceService();
+
+  NavigationNotifier() : super(NavigationState()) {
+    _initLocationListener();
+    _loadInitialMockIncidents();
+  }
+
+  void _initLocationListener() {
+    _locationService.getRealtimeLocationStream().listen((userLoc) {
+      state = state.copyWith(currentLocation: userLoc);
+
+      // Si está en modo navegación, verificar el progreso de los pasos de maniobras
+      if (state.isNavigating && state.selectedRoute != null) {
+        _checkStepProgress(userLoc);
+      }
+    });
+  }
+
+  void _checkStepProgress(UserLocation userLoc) {
+    final route = state.selectedRoute!;
+    if (state.currentStepIndex < route.steps.length) {
+      final currentStep = route.steps[state.currentStepIndex];
+      // Si el vehículo está a menos de 50 metros del punto de la maniobra, se avanza y habla por TTS
+      final distToStep = const Distance().as(
+        LengthUnit.Meter,
+        userLoc.position,
+        currentStep.location,
+      );
+
+      if (distToStep < 50) {
+        _ttsService.speakInstruction(currentStep.instruction);
+        if (state.currentStepIndex + 1 < route.steps.length) {
+          state = state.copyWith(currentStepIndex: state.currentStepIndex + 1);
+        }
+      }
+    }
+  }
+
+  Future<void> calculateRoutesTo(LatLng dest, String name) async {
+    final currentPos = state.currentLocation?.position ??
+        const LatLng(4.60971, -74.08175); // Bogotá fallback
+
+    final routes = await _directionsService.fetchRoutes(
+      origin: currentPos,
+      destination: dest,
+    );
+
+    if (routes.isNotEmpty) {
+      state = state.copyWith(
+        destination: dest,
+        destinationName: name,
+        availableRoutes: routes,
+        selectedRoute: routes.first,
+      );
+    }
+  }
+
+  void selectRoute(MapboxRoute route) {
+    state = state.copyWith(selectedRoute: route);
+  }
+
+  void startNavigation() {
+    if (state.selectedRoute != null) {
+      state = state.copyWith(
+        isNavigating: true,
+        currentStepIndex: 0,
+      );
+
+      final firstStep = state.selectedRoute!.steps.firstOrNull;
+      if (firstStep != null) {
+        _ttsService.speakInstruction('Iniciando ruta hacia ${state.destinationName}. ${firstStep.instruction}');
+      }
+    }
+  }
+
+  void stopNavigation() {
+    _ttsService.speakInstruction('Navegación finalizada.');
+    state = state.copyWith(
+      isNavigating: false,
+      selectedRoute: null,
+      availableRoutes: [],
+      destination: null,
+      destinationName: '',
+    );
+  }
+
+  void reportIncident(IncidentType type, String description) {
+    final pos = state.currentLocation?.position ?? const LatLng(4.60971, -74.08175);
+    final newIncident = IncidentReport(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: type,
+      title: _getIncidentTitle(type),
+      description: description,
+      position: pos,
+      timestamp: DateTime.now(),
+    );
+
+    final updatedIncidents = [...state.activeIncidents, newIncident];
+    state = state.copyWith(
+      activeIncidents: updatedIncidents,
+      pulsePoints: state.pulsePoints + 15, // Recompensa gamificada de puntos
+    );
+
+    _ttsService.speakInstruction('Gracias por reportar. Has ganado 15 Pulse Points.');
+  }
+
+  String _getIncidentTitle(IncidentType type) {
+    switch (type) {
+      case IncidentType.police:
+        return 'Control Policial';
+      case IncidentType.speedCamera:
+        return 'Radar de Velocidad';
+      case IncidentType.trafficJam:
+        return 'Tráfico Pesado';
+      case IncidentType.crash:
+        return 'Accidente en Vía';
+      case IncidentType.hazard:
+        return 'Objeto/Bache en Vía';
+      case IncidentType.construction:
+        return 'Obras en Construcción';
+    }
+  }
+
+  void _loadInitialMockIncidents() {
+    state = state.copyWith(
+      activeIncidents: [
+        IncidentReport(
+          id: 'inc_1',
+          type: IncidentType.police,
+          title: 'Control Policial',
+          description: 'Policía visible en carril derecho',
+          position: const LatLng(4.6120, -74.0800),
+          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+        IncidentReport(
+          id: 'inc_2',
+          type: IncidentType.speedCamera,
+          title: 'Radar Fijo 80 km/h',
+          description: 'Fotomulta activa',
+          position: const LatLng(4.6150, -74.0750),
+          timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
+        ),
+      ],
+    );
+  }
+}
+
+final navigationProvider =
+    StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
+  return NavigationNotifier();
+});
