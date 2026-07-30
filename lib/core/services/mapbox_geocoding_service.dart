@@ -19,6 +19,36 @@ class SearchLocationResult {
 class MapboxGeocodingService {
   final Dio _dio = Dio();
 
+  String _normalizeColombianAddress(String input) {
+    String s = input.trim();
+
+    // 1. Reemplazar prefijos de vías principales
+    s = s
+        .replaceAll(RegExp(r'\bcra\.?\b', caseSensitive: false), 'Carrera ')
+        .replaceAll(RegExp(r'\bcll\.?\b', caseSensitive: false), 'Calle ')
+        .replaceAll(RegExp(r'\btv\.?\b', caseSensitive: false), 'Transversal ')
+        .replaceAll(RegExp(r'\bdg\.?\b', caseSensitive: false), 'Diagonal ')
+        .replaceAll(RegExp(r'\bav\.?\b', caseSensitive: false), 'Avenida ')
+        .replaceAll(RegExp(r'\bauto\.?\b', caseSensitive: false), 'Autopista ');
+
+    // 2. Unir número con letra separada (ej: "71 c" -> "71C", "89 a" -> "89A")
+    s = s.replaceAllMapped(
+      RegExp(r'(\d+)\s+([a-zA-Z])(?=\s|\#|\-|$|\d)', caseSensitive: false),
+      (match) => '${match.group(1)}${match.group(2)?.toUpperCase()}',
+    );
+
+    // 3. Normalizar espacios alrededor del numeral #
+    s = s.replaceAll(RegExp(r'\#\s+'), '#');
+
+    // 4. Formatear la placa (ej: "#89A 13" o "# 89A - 13" -> "#89A-13")
+    s = s.replaceAllMapped(
+      RegExp(r'(\#\w+)\s*[\-\s]\s*(\d+)', caseSensitive: false),
+      (match) => '${match.group(1)}-${match.group(2)}',
+    );
+
+    return s;
+  }
+
   Future<List<SearchLocationResult>> searchPlaces(
     String query, {
     LatLng? proximity,
@@ -26,14 +56,8 @@ class MapboxGeocodingService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
-    // Expansión inteligente de nomenclatura vial colombiana (cra -> Carrera, cll -> Calle, etc.)
-    String expandedQuery = trimmed
-        .replaceAll(RegExp(r'\bcra\.?\b', caseSensitive: false), 'Carrera')
-        .replaceAll(RegExp(r'\bcll\.?\b', caseSensitive: false), 'Calle')
-        .replaceAll(RegExp(r'\btv\.?\b', caseSensitive: false), 'Transversal')
-        .replaceAll(RegExp(r'\bdg\.?\b', caseSensitive: false), 'Diagonal')
-        .replaceAll(RegExp(r'\bav\.?\b', caseSensitive: false), 'Avenida')
-        .replaceAll(RegExp(r'\bauto\.?\b', caseSensitive: false), 'Autopista');
+    // Formatear dirección colombiana (ej: "cra 71 c # 89 a 13" -> "Carrera 71C #89A-13")
+    final expandedQuery = _normalizeColombianAddress(trimmed);
 
     final url = '${MapboxConstants.geocodingBaseUrl}/${Uri.encodeComponent(expandedQuery)}.json';
     final queryParams = {
@@ -41,7 +65,7 @@ class MapboxGeocodingService {
       'autocomplete': 'true',
       'limit': '6',
       'language': 'es',
-      'country': 'co', // Priorizar y restringir búsqueda a direcciones locales de toda Colombia
+      'country': 'co', // Restringir a Colombia
     };
 
     if (proximity != null) {

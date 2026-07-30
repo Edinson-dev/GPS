@@ -34,7 +34,8 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
     }
 
     setState(() => _isLoading = true);
-    final results = await _geocodingService.searchPlaces(query);
+    final userPos = ref.read(navigationProvider).currentLocation?.position;
+    final results = await _geocodingService.searchPlaces(query, proximity: userPos);
     setState(() {
       _searchResults = results;
       _isLoading = false;
