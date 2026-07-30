@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
 import '../constants/mapbox_constants.dart';
+import '../constants/colombia_poi_database.dart';
 
 class SearchLocationResult {
   final String id;
@@ -56,6 +57,19 @@ class MapboxGeocodingService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
+    // Búsqueda en la Base de Datos Local de Puntos Clave de Colombia & Valle de Aburrá
+    final localPois = ColombiaPoiDatabase.searchLocalPois(trimmed);
+    final List<SearchLocationResult> results = localPois
+        .map(
+          (poi) => SearchLocationResult(
+            id: 'local_${poi.title.hashCode}',
+            title: poi.title,
+            address: poi.address,
+            position: poi.position,
+          ),
+        )
+        .toList();
+
     // Formatear dirección colombiana (ej: "cra 71 c # 89 a 13" -> "Carrera 71C #89A-13")
     final expandedQuery = _normalizeColombianAddress(trimmed);
 
@@ -77,10 +91,10 @@ class MapboxGeocodingService {
 
       if (response.statusCode == 200 && response.data['features'] != null) {
         final features = response.data['features'] as List;
-        return features.map((f) {
+        final onlineResults = features.map((f) {
           final center = f['center'] as List;
           String rawAddress = f['place_name'] ?? f['text'] ?? '';
-          
+
           // Eliminar cualquier código postal (ej: ", 050021", ", 110111", "CP 12345")
           final cleanAddress = rawAddress
               .replaceAll(RegExp(r',\s*\b\d{5,6}\b'), '')
@@ -97,10 +111,13 @@ class MapboxGeocodingService {
             ),
           );
         }).toList();
+
+        results.addAll(onlineResults);
+        return results;
       }
     } catch (e) {
-      return [];
+      return results;
     }
-    return [];
+    return results;
   }
 }
