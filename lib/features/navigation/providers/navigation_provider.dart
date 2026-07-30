@@ -83,7 +83,7 @@ class NavigationState {
 class NavigationNotifier extends StateNotifier<NavigationState> {
   final MapboxDirectionsService _directionsService = MapboxDirectionsService();
   final LocationService _locationService = LocationService();
-  final TTSVoiceService _ttsService = TTSVoiceService();
+  final TtsVoiceService _ttsService = TtsVoiceService();
 
   NavigationNotifier() : super(NavigationState()) {
     _initLocationListener();

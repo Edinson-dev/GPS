@@ -1,41 +1,39 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
-class TTSVoiceService {
+class TtsVoiceService {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isMuted = false;
 
-  TTSVoiceService() {
-    _initTTS();
+  bool get isMuted => _isMuted;
+
+  TtsVoiceService() {
+    _initTts();
   }
 
-  Future<void> _initTTS() async {
-    try {
-      await _flutterTts.setLanguage("es-ES");
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setVolume(1.0);
-      await _flutterTts.setPitch(1.0);
-    } catch (e) {
-      // Ignorar error si el dispositivo no soporta TTS sintético
-    }
-  }
-
-  Future<void> speakInstruction(String text) async {
-    if (_isMuted || text.isEmpty) return;
-    try {
-      await _flutterTts.stop();
-      await _flutterTts.speak(text);
-    } catch (e) {
-      // Fallback silencioso
-    }
+  void _initTts() async {
+    await _flutterTts.setLanguage('es-ES');
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.setSpeechRate(0.5);
   }
 
   void toggleMute() {
     _isMuted = !_isMuted;
+    if (_isMuted) {
+      _flutterTts.stop();
+    }
   }
 
-  bool get isMuted => _isMuted;
+  Future<void> speak(String text) async {
+    if (_isMuted || text.isEmpty) return;
+    await _flutterTts.stop();
+    await _flutterTts.speak(text);
+  }
 
-  void dispose() {
-    _flutterTts.stop();
+  Future<void> speakInstruction(String text) async {
+    await speak(text);
+  }
+
+  Future<void> stop() async {
+    await _flutterTts.stop();
   }
 }

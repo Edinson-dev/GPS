@@ -4,8 +4,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import '../../../../core/constants/mapbox_constants.dart';
+import '../../../../core/constants/colombia_tolls_database.dart';
+import '../../../../core/constants/speed_camera_database.dart';
+import '../../../../core/constants/colombia_gas_stations_database.dart';
+import '../../../../core/services/tts_voice_service.dart';
 import '../../../navigation/providers/navigation_provider.dart';
 import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
+import '../../../navigation/presentation/widgets/driver_earnings_sheet.dart';
+import '../../../gamification/presentation/widgets/leaderboard_modal.dart';
 import '../widgets/speed_limit_badge.dart';
 import '../widgets/map_controls.dart';
 import '../widgets/search_bar_overlay.dart';
@@ -13,7 +19,6 @@ import '../../../incidents/presentation/widgets/incident_fab_button.dart';
 import '../../../incidents/presentation/widgets/report_incident_modal.dart';
 import '../../../incidents/models/incident_model.dart';
 import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
-
 import '../../../incidents/presentation/widgets/sos_emergency_modal.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -293,13 +298,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               ),
                             );
                           },
-                          child: Container(
+                        child: Container(
                             decoration: BoxDecoration(
                               color: inc.color,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: inc.color.withOpacity(0.5),
+                                  color: inc.color.withValues(alpha: 0.5),
                                   blurRadius: 10,
                                   spreadRadius: 2,
                                 ),
@@ -309,6 +314,87 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               inc.icon,
                               color: Colors.white,
                               size: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Marcadores de Peajes en Colombia (Tarifas COP)
+                    ...ColombiaTollsDatabase.tolls.map(
+                      (toll) => Marker(
+                        point: toll.position,
+                        width: 38,
+                        height: 38,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('🛣️ ${toll.name} (${toll.locationName}) - Tarifa: \$${toll.priceCop} COP'),
+                                backgroundColor: const Color(0xFF1E293B),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.toll_rounded, color: Colors.black, size: 22),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Marcadores de Cámaras de Fotomultas en Medellín
+                    ...SpeedCameraDatabase.cameras.map(
+                      (cam) => Marker(
+                        point: cam.position,
+                        width: 36,
+                        height: 36,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('📷 Cámara Fotomulta (${cam.locationName}) - Máx ${cam.maxSpeedKmh} km/h'),
+                                backgroundColor: const Color(0xFFFF2E55),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF2E55),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Marcadores de Gasolineras (Terpel/Texaco) y Cargadores Eléctricos EPM
+                    ...ColombiaGasStationsDatabase.stations.map(
+                      (st) => Marker(
+                        point: st.position,
+                        width: 34,
+                        height: 34,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(st.isElectricCharging
+                                    ? '⚡ ${st.name} - ${st.address}'
+                                    : '⛽ ${st.name} (${st.brand}) - ${st.address}'),
+                                backgroundColor: const Color(0xFF10B981),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: st.isElectricCharging ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              st.isElectricCharging ? Icons.ev_station_rounded : Icons.local_gas_station_rounded,
+                              color: Colors.black,
+                              size: 18,
                             ),
                           ),
                         ),
@@ -514,7 +600,64 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           );
                         },
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 10),
+                      // Botón Calculadora Conductores (Uber/InDrive/Combustible)
+                      GestureDetector(
+                        onTap: () {
+                          final selected = navState.selectedRoute;
+                          final dist = selected != null ? (selected.distanceMeters / 1000.0) : 12.5;
+                          final dur = selected != null ? (selected.durationSeconds / 60.0) : 25.0;
+                          final tolls = ColombiaTollsDatabase.calculateTotalTolls(
+                            currentPos,
+                            navState.destination ?? currentPos,
+                          );
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => DriverEarningsSheet(
+                              distanceKm: dist,
+                              durationMinutes: dur,
+                              tollsCop: tolls,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x6610B981), blurRadius: 10, offset: Offset(0, 4)),
+                            ],
+                          ),
+                          child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 22),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Botón Leaderboard / Ranking de Guardianes
+                      GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => LeaderboardModal(
+                              currentPulsePoints: navState.pulsePoints,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B),
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x66F59E0B), blurRadius: 10, offset: Offset(0, 4)),
+                            ],
+                          ),
+                          child: const Icon(Icons.emoji_events_rounded, color: Colors.black, size: 22),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       // Floating SOS Emergency Button
                       GestureDetector(
                         onTap: () {
@@ -525,7 +668,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFFFF2E55), Color(0xFF990011)],
@@ -543,7 +686,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.warning_rounded, color: Colors.white, size: 20),
-                              SizedBox(width: 6),
+                              SizedBox(width: 4),
                               Text(
                                 'SOS',
                                 style: TextStyle(
