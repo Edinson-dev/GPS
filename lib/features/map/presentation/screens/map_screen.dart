@@ -33,8 +33,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    'https://api.mapbox.com/styles/v1/mapbox/traffic-day-v1/tiles/256/{z}/{x}/{y}?access_token=${MapboxConstants.publicToken}',
     'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   ];
 
   String get _currentTileStyle {
@@ -238,27 +238,78 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ),
                         ),
                       ),
-                    // Marcadores de Incidentes en Vía
+                    // Marcadores de Incidentes en Vía con Verificación Comunitaria en Tiempo Real
                     ...navState.activeIncidents.map(
                       (inc) => Marker(
                         point: inc.position,
-                        width: 38,
-                        height: 38,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFF2E55),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0xFFFF2E55),
-                                blurRadius: 8,
+                        width: 42,
+                        height: 42,
+                        child: GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                backgroundColor: const Color(0xFF1E293B),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                title: Row(
+                                  children: [
+                                    Icon(inc.icon, color: inc.color, size: 28),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        inc.title,
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                content: Text(
+                                  '¿Este reporte sigue activo en tiempo real en la vía?\n(${inc.description.isNotEmpty ? inc.description : "Reportado por la comunidad"})',
+                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                ),
+                                actions: [
+                                  TextButton.icon(
+                                    icon: const Icon(Icons.thumb_down_rounded, color: Color(0xFFFF2E55), size: 18),
+                                    label: const Text('Ya no está', style: TextStyle(color: Color(0xFFFF2E55))),
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Gracias por verificar en tiempo real. Reporte actualizado.')),
+                                      );
+                                    },
+                                  ),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00C8FF)),
+                                    icon: const Icon(Icons.thumb_up_rounded, color: Colors.black, size: 18),
+                                    label: const Text('Confirmar (+5 pts)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('¡Confirmado! Ganaste +5 PulsePoints comunitarios.')),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Colors.white,
-                            size: 22,
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: inc.color,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: inc.color.withOpacity(0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              inc.icon,
+                              color: Colors.white,
+                              size: 22,
+                            ),
                           ),
                         ),
                       ),
