@@ -23,7 +23,7 @@ class WayPulseApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
-      initialRoute: AppRoutes.map,
+      initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );
   }
