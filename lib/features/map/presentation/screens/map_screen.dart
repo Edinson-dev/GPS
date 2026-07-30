@@ -20,8 +20,10 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
+  late final MapController _mapController;
   bool _is3DMode = true;
   int _styleIndex = 0;
+  bool _hasCenteredInitialPos = false;
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
@@ -30,9 +32,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
+
+    // Auto-centrar en la ubicación GPS real del usuario cuando se recibe por primera vez
+    ref.listen(navigationProvider, (previous, next) {
+      if (next.currentLocation != null && !_hasCenteredInitialPos) {
+        _hasCenteredInitialPos = true;
+        _mapController.move(next.currentLocation!.position, 16.5);
+      }
+    });
 
     if (navState.isNavigating) {
       return const NavigationModeScreen();
@@ -41,6 +63,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final currentPos = navState.currentLocation?.position ??
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
     final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
+    final currentHeading = (navState.currentLocation?.heading ?? 0.0) * (3.141592653589793 / 180.0);
 
     final topInset = MediaQuery.of(context).padding.top + 10;
 
@@ -50,9 +73,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Capa de Mapa Mosaicos Waze Light Ultra-Rápidos
           Positioned.fill(
             child: FlutterMap(
+              mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
-                initialZoom: MapboxConstants.defaultZoom,
+                initialZoom: 16.5,
               ),
               children: [
                 TileLayer(
@@ -66,49 +90,74 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       Polyline(
                         points: navState.selectedRoute!.polylinePoints,
                         color: const Color(0xFF00C8FF),
-                        strokeWidth: 6.0,
+                        strokeWidth: 7.0,
                       ),
                     ],
                   ),
                 MarkerLayer(
                   markers: [
+                    // Marcador GPS estilo Flecha Waze Neón con Rotación Real por Brujula/Heading
                     Marker(
                       point: currentPos,
-                      width: 44,
-                      height: 44,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00C8FF),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00C8FF).withOpacity(0.5),
-                              blurRadius: 12,
-                              spreadRadius: 2,
+                      width: 54,
+                      height: 54,
+                      child: Transform.rotate(
+                        angle: currentHeading,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00C8FF).withOpacity(0.3),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00C8FF).withOpacity(0.6),
+                                    blurRadius: 18,
+                                    spreadRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF00C8FF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.navigation,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
                           ],
-                        ),
-                        child: const Icon(
-                          Icons.navigation_rounded,
-                          color: Colors.white,
-                          size: 26,
                         ),
                       ),
                     ),
                     ...navState.activeIncidents.map(
                       (inc) => Marker(
                         point: inc.position,
-                        width: 36,
-                        height: 36,
+                        width: 38,
+                        height: 38,
                         child: Container(
                           decoration: const BoxDecoration(
                             color: Color(0xFFFF2E55),
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF2E55),
+                                blurRadius: 8,
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.warning_amber_rounded,
                             color: Colors.white,
-                            size: 20,
+                            size: 22,
                           ),
                         ),
                       ),
@@ -150,6 +199,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               is3DMode: _is3DMode,
               onToggle3D: () => setState(() => _is3DMode = !_is3DMode),
               onRecenter: () {
+                _mapController.move(currentPos, 16.5);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Recentrado en tu ubicación GPS actual'),

@@ -71,6 +71,21 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   NavigationNotifier() : super(NavigationState()) {
     _initLocationListener();
     _loadInitialMockIncidents();
+    requestInitialLocation();
+  }
+
+  Future<void> requestInitialLocation() async {
+    final pos = await _locationService.getCurrentPosition();
+    if (pos != null) {
+      state = state.copyWith(
+        currentLocation: UserLocation(
+          position: LatLng(pos.latitude, pos.longitude),
+          speedKmh: (pos.speed < 0 ? 0 : pos.speed) * 3.6,
+          heading: pos.heading,
+          altitude: pos.altitude,
+        ),
+      );
+    }
   }
 
   void setTransportMode(TransportMode mode) {
