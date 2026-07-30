@@ -5,6 +5,8 @@ import '../../../core/services/mapbox_directions_service.dart';
 import '../../../core/services/tts_voice_service.dart';
 import '../../incidents/models/incident_model.dart';
 
+enum TransportMode { car, moto, bike, walk, transit }
+
 class NavigationState {
   final UserLocation? currentLocation;
   final LatLng? destination;
@@ -16,6 +18,7 @@ class NavigationState {
   final double currentSpeedLimit;
   final List<IncidentReport> activeIncidents;
   final int pulsePoints;
+  final TransportMode selectedTransportMode;
 
   NavigationState({
     this.currentLocation,
@@ -28,6 +31,7 @@ class NavigationState {
     this.currentSpeedLimit = 80.0,
     this.activeIncidents = const [],
     this.pulsePoints = 140,
+    this.selectedTransportMode = TransportMode.car,
   });
 
   NavigationState copyWith({
@@ -41,6 +45,7 @@ class NavigationState {
     double? currentSpeedLimit,
     List<IncidentReport>? activeIncidents,
     int? pulsePoints,
+    TransportMode? selectedTransportMode,
   }) {
     return NavigationState(
       currentLocation: currentLocation ?? this.currentLocation,
@@ -53,6 +58,7 @@ class NavigationState {
       currentSpeedLimit: currentSpeedLimit ?? this.currentSpeedLimit,
       activeIncidents: activeIncidents ?? this.activeIncidents,
       pulsePoints: pulsePoints ?? this.pulsePoints,
+      selectedTransportMode: selectedTransportMode ?? this.selectedTransportMode,
     );
   }
 }
@@ -67,11 +73,17 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     _loadInitialMockIncidents();
   }
 
+  void setTransportMode(TransportMode mode) {
+    state = state.copyWith(selectedTransportMode: mode);
+    if (state.destination != null) {
+      calculateRoutesTo(state.destination!, state.destinationName);
+    }
+  }
+
   void _initLocationListener() {
     _locationService.getRealtimeLocationStream().listen((userLoc) {
       state = state.copyWith(currentLocation: userLoc);
 
-      // Si está en modo navegación, verificar el progreso de los pasos de maniobras
       if (state.isNavigating && state.selectedRoute != null) {
         _checkStepProgress(userLoc);
       }
@@ -82,7 +94,6 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     final route = state.selectedRoute!;
     if (state.currentStepIndex < route.steps.length) {
       final currentStep = route.steps[state.currentStepIndex];
-      // Si el vehículo está a menos de 50 metros del punto de la maniobra, se avanza y habla por TTS
       final distToStep = const Distance().as(
         LengthUnit.Meter,
         userLoc.position,
@@ -100,11 +111,31 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
 
   Future<void> calculateRoutesTo(LatLng dest, String name) async {
     final currentPos = state.currentLocation?.position ??
-        const LatLng(4.60971, -74.08175); // Bogotá fallback
+        const LatLng(4.60971, -74.08175);
+
+    String profileStr = 'driving';
+    switch (state.selectedTransportMode) {
+      case TransportMode.car:
+        profileStr = 'driving';
+        break;
+      case TransportMode.moto:
+        profileStr = 'driving';
+        break;
+      case TransportMode.bike:
+        profileStr = 'cycling';
+        break;
+      case TransportMode.walk:
+        profileStr = 'walking';
+        break;
+      case TransportMode.transit:
+        profileStr = 'walking';
+        break;
+    }
 
     final routes = await _directionsService.fetchRoutes(
       origin: currentPos,
       destination: dest,
+      profile: profileStr,
     );
 
     if (routes.isNotEmpty) {

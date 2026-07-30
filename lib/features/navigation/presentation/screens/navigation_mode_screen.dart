@@ -27,6 +27,8 @@ class NavigationModeScreen extends ConsumerWidget {
     final currentPos = navState.currentLocation?.position ??
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
 
+    final topInset = MediaQuery.of(context).padding.top + 10;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -40,8 +42,9 @@ class NavigationModeScreen extends ConsumerWidget {
               children: [
                 TileLayer(
                   urlTemplate:
-                      'https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
+                      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
+                  maxZoom: 19,
                 ),
                 if (route != null)
                   PolylineLayer(
@@ -83,18 +86,18 @@ class NavigationModeScreen extends ConsumerWidget {
             ),
           ),
 
-          // Banner Superior: Próxima Maniobra e Instrucción por Voz
+          // Banner Superior: Próxima Maniobra e Instrucción por Voz (Safe Inset)
           Positioned(
-            top: 50,
-            left: 16,
-            right: 16,
+            top: topInset,
+            left: 12,
+            right: 12,
             child: TurnInstructionBanner(currentStep: currentStep),
           ),
 
           // Lado Izquierdo: Velocímetro
           Positioned(
-            top: 170,
-            left: 16,
+            top: topInset + 105,
+            left: 12,
             child: SpeedLimitBadge(
               currentSpeedKmh: currentSpeed,
               speedLimitKmh: navState.currentSpeedLimit,

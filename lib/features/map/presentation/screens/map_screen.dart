@@ -21,18 +21,19 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   bool _is3DMode = true;
+  int _styleIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  final List<String> _tileStyles = [
+    'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}?access_token=${MapboxConstants.publicToken}',
+  ];
 
   @override
   Widget build(BuildContext context) {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 
-    // Si la navegación activa está iniciada, cambia al modo de conducción 3D
     if (navState.isNavigating) {
       return const NavigationModeScreen();
     }
@@ -41,10 +42,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
     final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
 
+    final topInset = MediaQuery.of(context).padding.top + 10;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Capa de Mapa: Mosaicos Mapbox Waze-Light (FlutterMap)
+          // Capa de Mapa Mosaicos Waze Light Ultra-Rápidos
           Positioned.fill(
             child: FlutterMap(
               options: MapOptions(
@@ -53,9 +56,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
+                  urlTemplate: _tileStyles[_styleIndex],
                   userAgentPackageName: 'com.waypulse.waypulse_app',
+                  maxZoom: 19,
                 ),
                 if (navState.selectedRoute != null)
                   PolylineLayer(
@@ -116,11 +119,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
-          // Overlay Superior: Barra de Búsqueda de Destino
+          // Overlay Superior: Barra de Búsqueda y Selector de Transportes (Con Padding Seguro de Notch)
           Positioned(
-            top: 50,
-            left: 16,
-            right: 16,
+            top: topInset,
+            left: 12,
+            right: 12,
             child: SearchBarOverlay(
               pulsePoints: navState.pulsePoints,
               onPlaceSelected: (pos, name) {
@@ -129,36 +132,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
-          // Overlay Izquierdo: Velocímetro y Alerta de Velocidad
+          // Overlay Izquierdo: Velocímetro
           Positioned(
-            top: 130,
-            left: 16,
+            top: topInset + 105,
+            left: 12,
             child: SpeedLimitBadge(
               currentSpeedKmh: currentSpeed,
               speedLimitKmh: navState.currentSpeedLimit,
             ),
           ),
 
-          // Overlay Derecho: Controles del Mapa (2D/3D, Recentrar, Capas)
+          // Overlay Derecho: Controles del Mapa
           Positioned(
-            top: 130,
-            right: 16,
+            top: topInset + 105,
+            right: 12,
             child: MapControlsWidget(
               is3DMode: _is3DMode,
               onToggle3D: () => setState(() => _is3DMode = !_is3DMode),
               onRecenter: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Recentrado en tu posición GPS actual'),
+                    content: Text('Recentrado en tu ubicación GPS actual'),
                     duration: Duration(seconds: 1),
                   ),
                 );
               },
               onToggleLayers: () {
+                setState(() {
+                  _styleIndex = (_styleIndex + 1) % _tileStyles.length;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Capa de Tráfico y Terreno 3D Mapbox Activa'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text('Capa de mapa cambiada a estilo ${_styleIndex == 0 ? "Waze Light" : _styleIndex == 1 ? "OpenStreet" : "Mapbox HD"}'),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
               },
@@ -168,7 +174,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Overlay Inferior Central: Botón FAB de Reporte de Alertas Waze
           if (navState.availableRoutes.isEmpty)
             Positioned(
-              bottom: 30,
+              bottom: 24,
               left: 0,
               right: 0,
               child: Center(

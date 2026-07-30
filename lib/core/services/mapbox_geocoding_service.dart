@@ -44,10 +44,18 @@ class MapboxGeocodingService {
         final features = response.data['features'] as List;
         return features.map((f) {
           final center = f['center'] as List;
+          String rawAddress = f['place_name'] ?? f['text'] ?? '';
+          
+          // Eliminar cualquier código postal (ej: ", 050021", ", 110111", "CP 12345")
+          final cleanAddress = rawAddress
+              .replaceAll(RegExp(r',\s*\b\d{5,6}\b'), '')
+              .replaceAll(RegExp(r'\bCP\s*\d{5,6}\b', caseSensitive: false), '')
+              .trim();
+
           return SearchLocationResult(
             id: f['id'] ?? '',
-            title: f['text'] ?? f['place_name'] ?? 'Ubicación',
-            address: f['place_name'] ?? '',
+            title: f['text'] ?? f['place_name'] ?? 'Ubicación Exacta',
+            address: cleanAddress.isNotEmpty ? cleanAddress : rawAddress,
             position: LatLng(
               (center[1] as num).toDouble(),
               (center[0] as num).toDouble(),

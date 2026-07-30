@@ -66,9 +66,10 @@ class MapboxDirectionsService {
   Future<List<MapboxRoute>> fetchRoutes({
     required LatLng origin,
     required LatLng destination,
+    String profile = 'driving',
   }) async {
     final url =
-        '${MapboxConstants.directionsBaseUrl}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}';
+        'https://api.mapbox.com/directions/v5/mapbox/$profile/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}';
 
     try {
       final response = await _dio.get(url, queryParameters: {
