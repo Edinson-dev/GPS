@@ -7,11 +7,13 @@ import '../../../navigation/providers/navigation_provider.dart';
 class SearchBarOverlay extends ConsumerStatefulWidget {
   final int pulsePoints;
   final Function(LatLng position, String name) onPlaceSelected;
+  final Function(bool isSearching)? onSearchingStateChanged;
 
   const SearchBarOverlay({
     super.key,
     required this.pulsePoints,
     required this.onPlaceSelected,
+    this.onSearchingStateChanged,
   });
 
   @override
@@ -27,6 +29,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
   void _onSearchChanged(String query) async {
     if (query.trim().length < 2) {
       setState(() => _searchResults = []);
+      widget.onSearchingStateChanged?.call(false);
       return;
     }
 
@@ -36,6 +39,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
       _searchResults = results;
       _isLoading = false;
     });
+    widget.onSearchingStateChanged?.call(_searchResults.isNotEmpty);
   }
 
   @override
@@ -135,6 +139,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                   onPressed: () {
                     _controller.clear();
                     setState(() => _searchResults = []);
+                    widget.onSearchingStateChanged?.call(false);
                   },
                 ),
               // Insignia de PulsePoints Gamificada
@@ -201,6 +206,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                     widget.onPlaceSelected(item.position, item.title);
                     _controller.clear();
                     setState(() => _searchResults = []);
+                    widget.onSearchingStateChanged?.call(false);
                   },
                 );
               },

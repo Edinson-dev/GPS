@@ -7,6 +7,7 @@ class RouteSelectorSheet extends StatelessWidget {
   final MapboxRoute? selectedRoute;
   final Function(MapboxRoute route) onSelect;
   final VoidCallback onStartNavigation;
+  final VoidCallback? onCancel;
 
   const RouteSelectorSheet({
     super.key,
@@ -14,12 +15,13 @@ class RouteSelectorSheet extends StatelessWidget {
     required this.selectedRoute,
     required this.onSelect,
     required this.onStartNavigation,
+    this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         color: Color(0xFF1E293B),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -38,16 +40,26 @@ class RouteSelectorSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Elige tu Ruta',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Vista Previa de Ruta',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              if (onCancel != null)
+                IconButton(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

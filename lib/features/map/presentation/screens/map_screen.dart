@@ -10,6 +10,7 @@ import '../widgets/map_controls.dart';
 import '../widgets/search_bar_overlay.dart';
 import '../../../incidents/presentation/widgets/incident_fab_button.dart';
 import '../../../incidents/presentation/widgets/report_incident_modal.dart';
+import '../../../incidents/models/incident_model.dart';
 import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _is3DMode = true;
   int _styleIndex = 0;
   bool _hasCenteredInitialPos = false;
+  bool _isSearchingDropdownOpen = false;
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
@@ -43,16 +45,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
   }
 
+  void _fitRouteBounds(LatLng origin, LatLng dest, List<LatLng> points) {
+    if (points.isEmpty) return;
+    try {
+      final bounds = LatLngBounds.fromPoints([origin, dest, ...points]);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 140),
+        ),
+      );
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 
-    // Auto-centrar en la ubicación GPS real del usuario cuando se recibe por primera vez
+    // Escuchar cambios en la ruta o ubicación para auto-centrar o encuadrar vista previa de ruta
     ref.listen(navigationProvider, (previous, next) {
       if (next.currentLocation != null && !_hasCenteredInitialPos) {
         _hasCenteredInitialPos = true;
         _mapController.move(next.currentLocation!.position, 16.5);
+      }
+
+      if (next.selectedRoute != null && next.destination != null && previous?.selectedRoute != next.selectedRoute) {
+        _fitRouteBounds(
+          next.currentLocation?.position ?? const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng),
+          next.destination!,
+          next.selectedRoute!.polylinePoints,
+        );
       }
     });
 
@@ -66,6 +89,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final currentHeading = (navState.currentLocation?.heading ?? 0.0) * (3.141592653589793 / 180.0);
 
     final topInset = MediaQuery.of(context).padding.top + 10;
+
+    // Extraer puntos de alerta de tráfico pesado o accidentes para dibujar línea roja
+    final List<Polyline> trafficLines = [];
+    if (navState.selectedRoute != null) {
+      final trafficIncidents = navState.activeIncidents.where(
+        (inc) => inc.type == IncidentType.trafficJam || inc.type == IncidentType.crash,
+      );
+      for (final inc in trafficIncidents) {
+        // Encontrar segmento de la ruta cercano al incidente
+        final routePts = navState.selectedRoute!.polylinePoints;
+        for (int i = 0; i < routePts.length - 1; i++) {
+          final dist = const Distance().as(LengthUnit.Meter, inc.position, routePts[i]);
+          if (dist < 150) {
+            final startIdx = (i - 4).clamp(0, routePts.length - 1);
+            final endIdx = (i + 4).clamp(0, routePts.length - 1);
+            trafficLines.add(
+              Polyline(
+                points: routePts.sublist(startIdx, endIdx + 1),
+                color: const Color(0xFFFF2E55),
+                strokeWidth: 9.0,
+              ),
+            );
+            break;
+          }
+        }
+      }
+    }
 
     return Scaffold(
       body: Stack(
@@ -84,19 +134,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   maxZoom: 19,
                 ),
-                if (navState.selectedRoute != null)
+                if (navState.selectedRoute != null) ...[
                   PolylineLayer(
                     polylines: [
+                      // Línea principal de ruta Waze Neón Cian
                       Polyline(
                         points: navState.selectedRoute!.polylinePoints,
                         color: const Color(0xFF00C8FF),
-                        strokeWidth: 7.0,
+                        strokeWidth: 8.0,
                       ),
+                      // Trazado de segmento rojo para tráfico pesado / accidentes
+                      ...trafficLines,
                     ],
                   ),
+                ],
                 MarkerLayer(
                   markers: [
-                    // Marcador GPS estilo Flecha Waze Neón con Rotación Real por Brujula/Heading
+                    // Marcador GPS estilo Flecha Waze Neón con Rotación Real por Brújula
                     Marker(
                       point: currentPos,
                       width: 54,
@@ -138,6 +192,32 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
+                    // Marcador de Destino Seleccionado
+                    if (navState.destination != null)
+                      Marker(
+                        point: navState.destination!,
+                        width: 48,
+                        height: 48,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF2E55),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF2E55),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.flag_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                      ),
+                    // Marcadores de Incidentes en Vía
                     ...navState.activeIncidents.map(
                       (inc) => Marker(
                         point: inc.position,
@@ -168,7 +248,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
-          // Overlay Superior: Barra de Búsqueda y Selector de Transportes (Con Padding Seguro de Notch)
+          // Overlay Superior: Barra de Búsqueda y Selector de Transportes
           Positioned(
             top: topInset,
             left: 12,
@@ -178,51 +258,66 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onPlaceSelected: (pos, name) {
                 navNotifier.calculateRoutesTo(pos, name);
               },
-            ),
-          ),
-
-          // Overlay Izquierdo: Velocímetro
-          Positioned(
-            top: topInset + 105,
-            left: 12,
-            child: SpeedLimitBadge(
-              currentSpeedKmh: currentSpeed,
-              speedLimitKmh: navState.currentSpeedLimit,
-            ),
-          ),
-
-          // Overlay Derecho: Controles del Mapa
-          Positioned(
-            top: topInset + 105,
-            right: 12,
-            child: MapControlsWidget(
-              is3DMode: _is3DMode,
-              onToggle3D: () => setState(() => _is3DMode = !_is3DMode),
-              onRecenter: () {
-                _mapController.move(currentPos, 16.5);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Recentrado en tu ubicación GPS actual'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-              onToggleLayers: () {
-                setState(() {
-                  _styleIndex = (_styleIndex + 1) % _tileStyles.length;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Capa de mapa cambiada a estilo ${_styleIndex == 0 ? "Waze Light" : _styleIndex == 1 ? "OpenStreet" : "Mapbox HD"}'),
-                    duration: const Duration(seconds: 1),
-                  ),
-                );
+              onSearchingStateChanged: (isSearching) {
+                setState(() => _isSearchingDropdownOpen = isSearching);
               },
             ),
           ),
+
+          // Overlay Izquierdo: Velocímetro (Se oculta al desplegar lista de búsqueda para no estorbar)
+          if (!_isSearchingDropdownOpen)
+            Positioned(
+              top: topInset + 105,
+              left: 12,
+              child: SpeedLimitBadge(
+                currentSpeedKmh: currentSpeed,
+                speedLimitKmh: navState.currentSpeedLimit,
+              ),
+            ),
+
+          // Overlay Derecho: Controles del Mapa 2D/3D (Se oculta al buscar para no tapar los resultados)
+          if (!_isSearchingDropdownOpen)
+            Positioned(
+              top: topInset + 105,
+              right: 12,
+              child: MapControlsWidget(
+                is3DMode: _is3DMode,
+                onToggle3D: () {
+                  setState(() => _is3DMode = !_is3DMode);
+                  _mapController.rotate(_is3DMode ? 0.0 : 35.0);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_is3DMode ? 'Modo 2D Norte Arriba Activo' : 'Modo 3D Perspectiva Activo'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                onRecenter: () {
+                  _mapController.move(currentPos, 16.5);
+                  _mapController.rotate(0.0);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Recentrado en tu ubicación GPS actual'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                onToggleLayers: () {
+                  setState(() {
+                    _styleIndex = (_styleIndex + 1) % _tileStyles.length;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Capa de mapa cambiada a estilo ${_styleIndex == 0 ? "Waze Light" : _styleIndex == 1 ? "OpenStreet" : "Mapbox HD"}'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
 
           // Overlay Inferior Central: Botón FAB de Reporte de Alertas Waze
-          if (navState.availableRoutes.isEmpty)
+          if (navState.availableRoutes.isEmpty && !_isSearchingDropdownOpen)
             Positioned(
               bottom: 24,
               left: 0,
@@ -255,6 +350,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 selectedRoute: navState.selectedRoute,
                 onSelect: (route) => navNotifier.selectRoute(route),
                 onStartNavigation: () => navNotifier.startNavigation(),
+                onCancel: () => navNotifier.stopNavigation(),
               ),
             ),
         ],
