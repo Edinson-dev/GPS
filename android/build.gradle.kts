@@ -19,6 +19,15 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    plugins.withId("com.android.library") {
+        val android = extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
+        if (android.namespace == null) {
+            android.namespace = "com.plugin." + project.name.replace("-", "_")
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
