@@ -29,6 +29,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   int _styleIndex = 0;
   bool _hasCenteredInitialPos = false;
   bool _isSearchingDropdownOpen = false;
+  bool _showTrafficFlow = true;
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
@@ -376,6 +377,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   );
                 },
+                onToggleTraffic: () {
+                  setState(() => _showTrafficFlow = !_showTrafficFlow);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_showTrafficFlow ? 'Capa de Tráfico en Tiempo Real Activada' : 'Capa de Tráfico Oculta'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                isTrafficActive: _showTrafficFlow,
                 onToggleLayers: () {
                   setState(() {
                     _styleIndex = (_styleIndex + 1) % _tileStyles.length;

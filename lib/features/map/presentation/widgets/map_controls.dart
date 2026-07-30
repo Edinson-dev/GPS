@@ -5,6 +5,8 @@ class MapControlsWidget extends StatelessWidget {
   final VoidCallback onToggle3D;
   final bool is3DMode;
   final VoidCallback onToggleLayers;
+  final VoidCallback? onToggleTraffic;
+  final bool isTrafficActive;
 
   const MapControlsWidget({
     super.key,
@@ -12,6 +14,8 @@ class MapControlsWidget extends StatelessWidget {
     required this.onToggle3D,
     required this.is3DMode,
     required this.onToggleLayers,
+    this.onToggleTraffic,
+    this.isTrafficActive = true,
   });
 
   @override
@@ -26,6 +30,15 @@ class MapControlsWidget extends StatelessWidget {
           isActive: is3DMode,
         ),
         const SizedBox(height: 10),
+        if (onToggleTraffic != null) ...[
+          _buildCircularButton(
+            icon: Icons.traffic_rounded,
+            onPressed: onToggleTraffic!,
+            isActive: isTrafficActive,
+            color: isTrafficActive ? const Color(0xFFFF6B00) : const Color(0xFF1E293B),
+          ),
+          const SizedBox(height: 10),
+        ],
         _buildCircularButton(
           icon: Icons.layers_rounded,
           onPressed: onToggleLayers,

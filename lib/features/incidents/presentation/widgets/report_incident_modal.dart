@@ -9,6 +9,7 @@ class ReportIncidentModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> options = [
+      {'type': IncidentType.transitAgent, 'label': 'Tránsito', 'icon': Icons.shield_rounded, 'color': const Color(0xFF00E5FF)},
       {'type': IncidentType.police, 'label': 'Policía', 'icon': Icons.local_police_rounded, 'color': const Color(0xFF29B6F6)},
       {'type': IncidentType.speedCamera, 'label': 'Radar', 'icon': Icons.camera_alt_rounded, 'color': const Color(0xFFFFB300)},
       {'type': IncidentType.trafficJam, 'label': 'Tráfico', 'icon': Icons.traffic_rounded, 'color': const Color(0xFFFF6B00)},

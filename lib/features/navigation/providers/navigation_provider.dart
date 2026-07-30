@@ -309,12 +309,22 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
         return 'Hueco / Cráter Peligroso';
       case IncidentType.flooding:
         return 'Zona de Inundación / Lluvia';
+      case IncidentType.transitAgent:
+        return 'Agente de Tránsito / Retén';
     }
   }
 
   void _loadInitialMockIncidents() {
     state = state.copyWith(
       activeIncidents: [
+        IncidentReport(
+          id: 'inc_0',
+          type: IncidentType.transitAgent,
+          title: 'Agente de Tránsito',
+          description: 'Control de movilidad en vía principal',
+          position: const LatLng(4.6105, -74.0815),
+          timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+        ),
         IncidentReport(
           id: 'inc_1',
           type: IncidentType.police,

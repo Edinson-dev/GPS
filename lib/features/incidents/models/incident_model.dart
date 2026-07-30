@@ -10,6 +10,7 @@ enum IncidentType {
   construction,
   pothole,
   flooding,
+  transitAgent,
 }
 
 class IncidentReport {
@@ -51,6 +52,8 @@ class IncidentReport {
         return Icons.broken_image_rounded;
       case IncidentType.flooding:
         return Icons.water_drop_rounded;
+      case IncidentType.transitAgent:
+        return Icons.shield_rounded;
     }
   }
 
@@ -72,6 +75,8 @@ class IncidentReport {
         return const Color(0xFFFF5722);
       case IncidentType.flooding:
         return const Color(0xFF00B0FF);
+      case IncidentType.transitAgent:
+        return const Color(0xFF00E5FF);
     }
   }
 }
