@@ -8,6 +8,8 @@ enum IncidentType {
   crash,
   hazard,
   construction,
+  pothole,
+  flooding,
 }
 
 class IncidentReport {
@@ -45,6 +47,10 @@ class IncidentReport {
         return Icons.warning_amber_rounded;
       case IncidentType.construction:
         return Icons.engineering_rounded;
+      case IncidentType.pothole:
+        return Icons.broken_image_rounded;
+      case IncidentType.flooding:
+        return Icons.water_drop_rounded;
     }
   }
 
@@ -62,6 +68,10 @@ class IncidentReport {
         return const Color(0xFFFF9100);
       case IncidentType.construction:
         return const Color(0xFFAB47BC);
+      case IncidentType.pothole:
+        return const Color(0xFFFF5722);
+      case IncidentType.flooding:
+        return const Color(0xFF00B0FF);
     }
   }
 }

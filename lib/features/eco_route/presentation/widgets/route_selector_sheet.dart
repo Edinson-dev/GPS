@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/mapbox_directions_service.dart';
 import '../../../../core/utils/distance_formatter.dart';
 
+import '../../../../core/services/pico_placa_service.dart';
+import '../../../../features/navigation/presentation/widgets/pico_placa_badge.dart';
+
 class RouteSelectorSheet extends StatelessWidget {
   final List<MapboxRoute> routes;
   final MapboxRoute? selectedRoute;
   final Function(MapboxRoute route) onSelect;
   final VoidCallback onStartNavigation;
   final VoidCallback? onCancel;
+  final PicoPlacaResult? picoPlacaResult;
 
   const RouteSelectorSheet({
     super.key,
@@ -16,6 +20,7 @@ class RouteSelectorSheet extends StatelessWidget {
     required this.onSelect,
     required this.onStartNavigation,
     this.onCancel,
+    this.picoPlacaResult,
   });
 
   @override
@@ -80,6 +85,9 @@ class RouteSelectorSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+
+          if (picoPlacaResult != null)
+            PicoPlacaBadge(result: picoPlacaResult!),
 
           // Lista Horizontal / Compacta de Opciones de Ruta
           SizedBox(

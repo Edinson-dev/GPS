@@ -14,6 +14,8 @@ import '../../../incidents/presentation/widgets/report_incident_modal.dart';
 import '../../../incidents/models/incident_model.dart';
 import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
 
+import '../../../incidents/presentation/widgets/sos_emergency_modal.dart';
+
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
@@ -30,9 +32,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}?access_token=${MapboxConstants.publicToken}',
   ];
+
+  String get _currentTileStyle {
+    final hour = DateTime.now().hour;
+    final isNight = hour >= 18 || hour < 6;
+    if (_styleIndex == 0 && isNight) {
+      return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+    }
+    return _tileStyles[_styleIndex];
+  }
 
   @override
   void initState() {
@@ -136,7 +147,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: _tileStyles[_styleIndex],
+                  urlTemplate: _currentTileStyle,
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
@@ -425,18 +436,65 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ],
                     ),
                   ),
-                  IncidentFabButton(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        builder: (ctx) => ReportIncidentModal(
-                          onReport: (type, desc) {
-                            navNotifier.reportIncident(type, desc);
-                          },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IncidentFabButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => ReportIncidentModal(
+                              onReport: (type, desc) {
+                                navNotifier.reportIncident(type, desc);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 16),
+                      // Floating SOS Emergency Button
+                      GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => SosEmergencyModal(currentPos: currentPos),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF2E55), Color(0xFF990011)],
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x66FF2E55),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 6),
+                              Text(
+                                'SOS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -454,6 +512,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 onSelect: (route) => navNotifier.selectRoute(route),
                 onStartNavigation: () => navNotifier.startNavigation(),
                 onCancel: () => navNotifier.stopNavigation(),
+                picoPlacaResult: navState.picoPlacaResult,
               ),
             ),
         ],

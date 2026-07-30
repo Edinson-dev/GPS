@@ -5,6 +5,8 @@ import '../../../core/services/mapbox_directions_service.dart';
 import '../../../core/services/tts_voice_service.dart';
 import '../../incidents/models/incident_model.dart';
 
+import '../../../core/services/pico_placa_service.dart';
+
 enum TransportMode { car, moto, bike, walk, transit }
 
 class NavigationState {
@@ -19,6 +21,8 @@ class NavigationState {
   final List<IncidentReport> activeIncidents;
   final int pulsePoints;
   final TransportMode selectedTransportMode;
+  final int vehiclePlateDigit;
+  final ColombianCity selectedCity;
 
   NavigationState({
     this.currentLocation,
@@ -32,7 +36,16 @@ class NavigationState {
     this.activeIncidents = const [],
     this.pulsePoints = 140,
     this.selectedTransportMode = TransportMode.car,
+    this.vehiclePlateDigit = 4,
+    this.selectedCity = ColombianCity.medellin,
   });
+
+  PicoPlacaResult get picoPlacaResult {
+    return PicoPlacaService().checkRestriction(
+      plateLastDigit: vehiclePlateDigit,
+      city: selectedCity,
+    );
+  }
 
   NavigationState copyWith({
     UserLocation? currentLocation,
@@ -46,6 +59,8 @@ class NavigationState {
     List<IncidentReport>? activeIncidents,
     int? pulsePoints,
     TransportMode? selectedTransportMode,
+    int? vehiclePlateDigit,
+    ColombianCity? selectedCity,
   }) {
     return NavigationState(
       currentLocation: currentLocation ?? this.currentLocation,
@@ -59,6 +74,8 @@ class NavigationState {
       activeIncidents: activeIncidents ?? this.activeIncidents,
       pulsePoints: pulsePoints ?? this.pulsePoints,
       selectedTransportMode: selectedTransportMode ?? this.selectedTransportMode,
+      vehiclePlateDigit: vehiclePlateDigit ?? this.vehiclePlateDigit,
+      selectedCity: selectedCity ?? this.selectedCity,
     );
   }
 }
@@ -266,6 +283,14 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     _ttsService.speakInstruction('Gracias por reportar. Has ganado 15 Pulse Points.');
   }
 
+  void setVehiclePlateDigit(int digit) {
+    state = state.copyWith(vehiclePlateDigit: digit);
+  }
+
+  void setSelectedCity(ColombianCity city) {
+    state = state.copyWith(selectedCity: city);
+  }
+
   String _getIncidentTitle(IncidentType type) {
     switch (type) {
       case IncidentType.police:
@@ -277,9 +302,13 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       case IncidentType.crash:
         return 'Accidente en Vía';
       case IncidentType.hazard:
-        return 'Objeto/Bache en Vía';
+        return 'Objeto en Vía';
       case IncidentType.construction:
         return 'Obras en Construcción';
+      case IncidentType.pothole:
+        return 'Hueco / Cráter Peligroso';
+      case IncidentType.flooding:
+        return 'Zona de Inundación / Lluvia';
     }
   }
 
@@ -301,6 +330,22 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
           description: 'Fotomulta activa',
           position: const LatLng(4.6150, -74.0750),
           timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
+        ),
+        IncidentReport(
+          id: 'inc_3',
+          type: IncidentType.pothole,
+          title: 'Hueco / Cráter Peligroso',
+          description: 'Hueco grande en carril central',
+          position: const LatLng(4.6110, -74.0810),
+          timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
+        ),
+        IncidentReport(
+          id: 'inc_4',
+          type: IncidentType.flooding,
+          title: 'Zona de Inundación',
+          description: 'Encharcamiento por lluvia en vía',
+          position: const LatLng(4.6140, -74.0780),
+          timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
         ),
       ],
     );

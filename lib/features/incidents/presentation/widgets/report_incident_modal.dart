@@ -13,6 +13,8 @@ class ReportIncidentModal extends StatelessWidget {
       {'type': IncidentType.speedCamera, 'label': 'Radar', 'icon': Icons.camera_alt_rounded, 'color': const Color(0xFFFFB300)},
       {'type': IncidentType.trafficJam, 'label': 'Tráfico', 'icon': Icons.traffic_rounded, 'color': const Color(0xFFFF6B00)},
       {'type': IncidentType.crash, 'label': 'Accidente', 'icon': Icons.car_crash_rounded, 'color': const Color(0xFFFF2E55)},
+      {'type': IncidentType.pothole, 'label': 'Hueco', 'icon': Icons.broken_image_rounded, 'color': const Color(0xFFFF5722)},
+      {'type': IncidentType.flooding, 'label': 'Inundación', 'icon': Icons.water_drop_rounded, 'color': const Color(0xFF00B0FF)},
       {'type': IncidentType.hazard, 'label': 'Peligro', 'icon': Icons.warning_amber_rounded, 'color': const Color(0xFFFF9100)},
       {'type': IncidentType.construction, 'label': 'Obras', 'icon': Icons.engineering_rounded, 'color': const Color(0xFFAB47BC)},
     ];
