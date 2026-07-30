@@ -30,12 +30,14 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Release APK
+      - name: Configure Mapbox Gradle Credentials
         run: |
+          mkdir -p ~/.gradle
           TOKEN=$(echo "c2suZXlKMWFYTWlPaUpqYlhNMk5UY3laRGd3TTFRdmJuaHdkamd6YVRaa2JtR3ZJbjAuR0EzczhSYVk3WWFBeW9BdEE1RzdpUQ==" | base64 -d)
-          export MAPBOX_DOWNLOADS_TOKEN="$TOKEN"
-          export ORG_GRADLE_PROJECT_MAPBOX_DOWNLOADS_TOKEN="$TOKEN"
-          flutter build apk --release
+          echo "MAPBOX_DOWNLOADS_TOKEN=$TOKEN" >> ~/.gradle/gradle.properties
+
+      - name: Build Release APK
+        run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
