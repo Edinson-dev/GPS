@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../../../../core/constants/mapbox_constants.dart';
 import '../../../navigation/providers/navigation_provider.dart';
 import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
@@ -27,9 +25,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) {
-      mapbox.MapboxOptions.setAccessToken(MapboxConstants.publicToken);
-    }
   }
 
   @override
@@ -49,96 +44,76 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Capa de Mapa: Mapbox Nativo en Android/iOS y Mosaicos Mapbox Web (FlutterMap) en Chrome
+          // Capa de Mapa: Mosaicos Mapbox Waze-Light (FlutterMap)
           Positioned.fill(
-            child: !kIsWeb
-                ? mapbox.MapWidget(
-                    key: const ValueKey('mapboxMap'),
-                    styleUri: _is3DMode
-                        ? MapboxConstants.styleStreets
-                        : MapboxConstants.styleLight,
-                    cameraOptions: mapbox.CameraOptions(
-                      center: mapbox.Point(
-                        coordinates: mapbox.Position(
-                          currentPos.longitude,
-                          currentPos.latitude,
-                        ),
-                      ).toJson(),
-                      zoom: MapboxConstants.defaultZoom,
-                      pitch: _is3DMode ? 45.0 : 0.0,
-                    ),
-                    onMapCreated: (map) {
-                      // MapboxMap controller
-                    },
-                  )
-                : FlutterMap(
-                    options: MapOptions(
-                      initialCenter: currentPos,
-                      initialZoom: MapboxConstants.defaultZoom,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
-                        userAgentPackageName: 'com.waypulse.waypulse_app',
-                      ),
-                      if (navState.selectedRoute != null)
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: navState.selectedRoute!.polylinePoints,
-                              color: const Color(0xFF00C8FF),
-                              strokeWidth: 6.0,
-                            ),
-                          ],
-                        ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: currentPos,
-                            width: 44,
-                            height: 44,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C8FF),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00C8FF).withOpacity(0.5),
-                                    blurRadius: 12,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.navigation_rounded,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                          ...navState.activeIncidents.map(
-                            (inc) => Marker(
-                              point: inc.position,
-                              width: 36,
-                              height: 36,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFFF2E55),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: currentPos,
+                initialZoom: MapboxConstants.defaultZoom,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
+                  userAgentPackageName: 'com.waypulse.waypulse_app',
+                ),
+                if (navState.selectedRoute != null)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: navState.selectedRoute!.polylinePoints,
+                        color: const Color(0xFF00C8FF),
+                        strokeWidth: 6.0,
                       ),
                     ],
                   ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: currentPos,
+                      width: 44,
+                      height: 44,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00C8FF),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00C8FF).withOpacity(0.5),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.navigation_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                    ...navState.activeIncidents.map(
+                      (inc) => Marker(
+                        point: inc.position,
+                        width: 36,
+                        height: 36,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF2E55),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
 
           // Overlay Superior: Barra de Búsqueda de Destino

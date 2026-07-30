@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../../../../core/constants/mapbox_constants.dart';
 import 'package:waypulse_app/features/navigation/providers/navigation_provider.dart';
 import '../widgets/turn_instruction_banner.dart';
@@ -32,73 +30,57 @@ class NavigationModeScreen extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Visor de Navegación 3D: Mapbox Nativo en Móvil vs Mosaicos Mapbox Web en Chrome
+          // Visor de Navegación 3D Mapbox Night
           Positioned.fill(
-            child: (!kIsWeb)
-                ? mapbox.MapWidget(
-                    key: const ValueKey('navigationMapWidget'),
-                    styleUri: MapboxConstants.styleNavigationNight,
-                    cameraOptions: mapbox.CameraOptions(
-                      center: mapbox.Point(
-                        coordinates: mapbox.Position(
-                          currentPos.longitude,
-                          currentPos.latitude,
-                        ),
-                      ).toJson(),
-                      zoom: 17.5,
-                      pitch: MapboxConstants.navigationPitch,
-                      bearing: navState.currentLocation?.heading ?? 0.0,
-                    ),
-                  )
-                : FlutterMap(
-                    options: MapOptions(
-                      initialCenter: currentPos,
-                      initialZoom: 17.0,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
-                        userAgentPackageName: 'com.waypulse.waypulse_app',
-                      ),
-                      if (route != null)
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: route.polylinePoints,
-                              color: const Color(0xFF00C8FF),
-                              strokeWidth: 8.0,
-                            ),
-                          ],
-                        ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: currentPos,
-                            width: 50,
-                            height: 50,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C8FF),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00C8FF).withOpacity(0.6),
-                                    blurRadius: 16,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.navigation,
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                            ),
-                          ),
-                        ],
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: currentPos,
+                initialZoom: 17.0,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://api.mapbox.com/styles/v1/mapbox/navigation-night-v1/tiles/256/{z}/{x}/{y}@2x?access_token=${MapboxConstants.publicToken}',
+                  userAgentPackageName: 'com.waypulse.waypulse_app',
+                ),
+                if (route != null)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: route.polylinePoints,
+                        color: const Color(0xFF00C8FF),
+                        strokeWidth: 8.0,
                       ),
                     ],
                   ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: currentPos,
+                      width: 50,
+                      height: 50,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00C8FF),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00C8FF).withOpacity(0.6),
+                              blurRadius: 16,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.navigation,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
 
           // Banner Superior: Próxima Maniobra e Instrucción por Voz
