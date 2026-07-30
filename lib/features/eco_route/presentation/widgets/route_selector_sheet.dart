@@ -20,19 +20,29 @@ class RouteSelectorSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeRoute = selectedRoute ?? (routes.isNotEmpty ? routes.first : null);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: const BoxDecoration(
         color: Color(0xFF1E293B),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Drag handle bar
           Center(
             child: Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
                 color: Colors.white24,
@@ -40,145 +50,166 @@ class RouteSelectorSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+
+          // Header con título y botón de cierre X
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Vista Previa de Ruta',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
               ),
               if (onCancel != null)
-                IconButton(
-                  onPressed: onCancel,
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                InkWell(
+                  onTap: onCancel,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: routes.length,
-            itemBuilder: (context, index) {
-              final r = routes[index];
-              final isSelected = selectedRoute?.id == r.id;
 
-              return InkWell(
-                onTap: () => onSelect(r),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF00C8FF).withOpacity(0.15)
-                        : const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
+          // Lista Horizontal / Compacta de Opciones de Ruta
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: routes.length,
+              itemBuilder: (context, index) {
+                final r = routes[index];
+                final isSelected = activeRoute?.id == r.id;
+
+                return GestureDetector(
+                  onTap: () => onSelect(r),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 170,
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF00C8FF)
-                          : const Color(0xFF334155),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        r.isEcoFriendly
-                            ? Icons.eco_rounded
-                            : Icons.bolt_rounded,
-                        color: r.isEcoFriendly
-                            ? const Color(0xFF00E676)
-                            : const Color(0xFFFF6B00),
-                        size: 32,
+                          ? const Color(0xFF00C8FF).withOpacity(0.18)
+                          : const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? const Color(0xFF00C8FF) : const Color(0xFF334155),
+                        width: isSelected ? 2 : 1,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Text(
-                                  r.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                if (r.isEcoFriendly) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF00E676).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'ECO',
-                                      style: TextStyle(
-                                        color: Color(0xFF00E676),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  )
-                                ]
-                              ],
-                            ),
-                            const SizedBox(height: 4),
                             Text(
-                              '${DistanceFormatter.formatDuration(r.durationSeconds)} • ${DistanceFormatter.formatDistance(r.distanceMeters)}',
-                              style: const TextStyle(
-                                color: Color(0xFF94A3B8),
-                                fontSize: 13,
+                              DistanceFormatter.formatDuration(r.durationSeconds),
+                              style: TextStyle(
+                                color: isSelected ? const Color(0xFF00C8FF) : Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 17,
                               ),
                             ),
+                            const Spacer(),
+                            if (r.isEcoFriendly)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00E676).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'ECO',
+                                  style: TextStyle(
+                                    color: Color(0xFF00E676),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                      Text(
-                        'ETA ${DistanceFormatter.calculateETA(r.durationSeconds)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                        const SizedBox(height: 4),
+                        Text(
+                          '${DistanceFormatter.formatDistance(r.distanceMeters)} • ETA ${DistanceFormatter.calculateETA(r.durationSeconds)}',
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: onStartNavigation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00C8FF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+
+          // Botones Principales estilo Waze: Ir Ahora (Cyan) y Salir Más Tarde (Dark)
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF334155)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              child: const Text(
-                'IR AHORA (MODO NAVEGACIÓN)',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: onStartNavigation,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00C8FF),
+                      elevation: 4,
+                      shadowColor: const Color(0xFF00C8FF).withOpacity(0.4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: const Text(
+                      'Ir ahora',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

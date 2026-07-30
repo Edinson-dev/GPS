@@ -248,24 +248,78 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
 
-          // Overlay Superior: Barra de Búsqueda y Selector de Transportes
-          Positioned(
-            top: topInset,
-            left: 12,
-            right: 12,
-            child: SearchBarOverlay(
-              pulsePoints: navState.pulsePoints,
-              onPlaceSelected: (pos, name) {
-                navNotifier.calculateRoutesTo(pos, name);
-              },
-              onSearchingStateChanged: (isSearching) {
-                setState(() => _isSearchingDropdownOpen = isSearching);
-              },
+          // Overlay Superior: Barra de Búsqueda O Encabezado de Vista Previa estilo Waze/Google Maps (Imagen 1)
+          if (navState.availableRoutes.isNotEmpty)
+            Positioned(
+              top: topInset,
+              left: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black38,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      onPressed: () => navNotifier.stopNavigation(),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Tu ubicación',
+                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                          ),
+                          Text(
+                            '➔ ${navState.destinationName}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Positioned(
+              top: topInset,
+              left: 12,
+              right: 12,
+              child: SearchBarOverlay(
+                pulsePoints: navState.pulsePoints,
+                onPlaceSelected: (pos, name) {
+                  FocusScope.of(context).unfocus();
+                  navNotifier.calculateRoutesTo(pos, name);
+                },
+                onSearchingStateChanged: (isSearching) {
+                  setState(() => _isSearchingDropdownOpen = isSearching);
+                },
+              ),
             ),
-          ),
 
           // Overlay Izquierdo: Velocímetro (Se oculta al desplegar lista de búsqueda para no estorbar)
-          if (!_isSearchingDropdownOpen)
+          if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
             Positioned(
               top: topInset + 105,
               left: 12,
@@ -278,7 +332,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Overlay Derecho: Controles del Mapa 2D/3D (Se oculta al buscar para no tapar los resultados)
           if (!_isSearchingDropdownOpen)
             Positioned(
-              top: topInset + 105,
+              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 105),
               right: 12,
               child: MapControlsWidget(
                 is3DMode: _is3DMode,
@@ -316,30 +370,70 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Overlay Inferior Central: Botón FAB de Reporte de Alertas Waze
+          // Overlay Inferior Central: Botón FAB de Reporte de Alertas e Insignia de Tráfico en Vivo (Imagen 2)
           if (navState.availableRoutes.isEmpty && !_isSearchingDropdownOpen)
             Positioned(
               bottom: 24,
               left: 0,
               right: 0,
-              child: Center(
-                child: IncidentFabButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      builder: (ctx) => ReportIncidentModal(
-                        onReport: (type, desc) {
-                          navNotifier.reportIncident(type, desc);
-                        },
-                      ),
-                    );
-                  },
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFF6B00)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF00E676),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '1786 Reportes cerca de ti',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IncidentFabButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (ctx) => ReportIncidentModal(
+                          onReport: (type, desc) {
+                            navNotifier.reportIncident(type, desc);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 
-          // Overlay Inferior Deslizable: Selector de Rutas Eco vs Rápidas
+          // Overlay Inferior Deslizable: Selector de Rutas Eco vs Rápidas (Compacto estilo Imagen 1)
           if (navState.availableRoutes.isNotEmpty)
             Positioned(
               bottom: 0,

@@ -23,14 +23,25 @@ class MapboxGeocodingService {
     String query, {
     LatLng? proximity,
   }) async {
-    if (query.trim().isEmpty) return [];
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
 
-    final url = '${MapboxConstants.geocodingBaseUrl}/${Uri.encodeComponent(query)}.json';
+    // Expansión inteligente de nomenclatura vial colombiana (cra -> Carrera, cll -> Calle, etc.)
+    String expandedQuery = trimmed
+        .replaceAll(RegExp(r'\bcra\.?\b', caseSensitive: false), 'Carrera')
+        .replaceAll(RegExp(r'\bcll\.?\b', caseSensitive: false), 'Calle')
+        .replaceAll(RegExp(r'\btv\.?\b', caseSensitive: false), 'Transversal')
+        .replaceAll(RegExp(r'\bdg\.?\b', caseSensitive: false), 'Diagonal')
+        .replaceAll(RegExp(r'\bav\.?\b', caseSensitive: false), 'Avenida')
+        .replaceAll(RegExp(r'\bauto\.?\b', caseSensitive: false), 'Autopista');
+
+    final url = '${MapboxConstants.geocodingBaseUrl}/${Uri.encodeComponent(expandedQuery)}.json';
     final queryParams = {
       'access_token': MapboxConstants.publicToken,
       'autocomplete': 'true',
-      'limit': '5',
+      'limit': '6',
       'language': 'es',
+      'country': 'co', // Priorizar y restringir búsqueda a direcciones locales de toda Colombia
     };
 
     if (proximity != null) {
