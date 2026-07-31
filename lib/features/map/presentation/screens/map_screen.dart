@@ -20,6 +20,8 @@ import '../../../incidents/presentation/widgets/incident_fab_button.dart';
 import '../../../incidents/presentation/widgets/report_incident_modal.dart';
 import '../../../incidents/models/incident_model.dart';
 import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
+import '../../../../core/services/caravan_service.dart';
+import '../../../caravan/presentation/widgets/caravan_modal.dart';
 import '../../../incidents/presentation/widgets/sos_emergency_modal.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -32,7 +34,10 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   late final MapController _mapController;
   final SpeedCameraApiService _cameraApiService = SpeedCameraApiService();
+  final CaravanService _caravanService = CaravanService();
+
   List<SpeedCameraItem> _liveSpeedCameras = SpeedCameraDatabase.cameras;
+  List<CaravanMember> _caravanMembers = [];
 
   bool _is3DMode = true;
   int _styleIndex = 0;
@@ -60,6 +65,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.initState();
     _mapController = MapController();
     _loadLiveSpeedCameras();
+    _caravanService.membersStream.listen((members) {
+      if (mounted) {
+        setState(() {
+          _caravanMembers = members;
+        });
+      }
+    });
   }
 
   void _loadLiveSpeedCameras() async {
@@ -105,6 +117,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         } else if (previous?.currentLocation?.position != next.currentLocation?.position) {
           // Seguir dinámicamente al usuario mientras camina o conduce por la ruta
           _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+          _caravanService.broadcastPosition(
+            next.currentLocation!.position,
+            next.currentLocation!.speedKmh,
+          );
         }
       }
 
@@ -390,6 +406,62 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
+                    // Marcadores de Miembros de Caravana en Vivo 👥
+                    ..._caravanMembers.where((m) => m.id != _caravanService.currentMemberId).map(
+                      (member) => Marker(
+                        point: member.position,
+                        width: 52,
+                        height: 52,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('👥 ${member.nickname} (${member.vehicleType == "bike" ? "Moto" : "Carro"}) • ${member.speedKmh.toInt()} km/h'),
+                                backgroundColor: const Color(0xFF8B5CF6),
+                              ),
+                            );
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF8B5CF6)),
+                                ),
+                                child: Text(
+                                  member.nickname,
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B5CF6),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.6),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  member.vehicleType == 'bike' ? Icons.two_wheeler_rounded : Icons.directions_car_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     // Marcadores de Gasolineras (Terpel/Texaco) y Cargadores Eléctricos EPM
                     ...ColombiaGasStationsDatabase.stations.map(
                       (st) => Marker(
@@ -621,6 +693,36 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             ),
                           );
                         },
+                      ),
+                      const SizedBox(width: 10),
+                      // Botón Modo Caravana / Rodada en Grupo 👥
+                      GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => CaravanModal(
+                              caravanService: _caravanService,
+                              currentPos: currentPos,
+                              onStateChanged: () => setState(() {}),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6),
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x668B5CF6), blurRadius: 10, offset: Offset(0, 4)),
+                            ],
+                          ),
+                          child: Icon(
+                            _caravanService.currentGroupCode != null ? Icons.groups_rounded : Icons.group_add_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       // Botón Calculadora Conductores (Uber/InDrive/Combustible)
