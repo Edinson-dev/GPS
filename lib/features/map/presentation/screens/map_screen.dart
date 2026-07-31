@@ -165,6 +165,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               options: MapOptions(
                 initialCenter: currentPos,
                 initialZoom: 16.5,
+                maxZoom: 18.5,
+                minZoom: 3.0,
               ),
               children: [
                 TileLayer(
@@ -173,6 +175,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: NetworkTileProvider(),
                   maxZoom: 19,
+                  maxNativeZoom: 18,
                   keepBuffer: 8,
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 0)),
                 ),

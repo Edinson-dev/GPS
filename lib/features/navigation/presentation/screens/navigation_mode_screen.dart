@@ -32,7 +32,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     setState(() {
       _isFollowingGps = true;
     });
-    _mapController.move(currentPos, 18.5);
+    _mapController.move(currentPos, 17.8);
     _mapController.rotate(-heading);
   }
 
@@ -78,7 +78,9 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
-                initialZoom: 18.5,
+                initialZoom: 17.8,
+                maxZoom: 18.5,
+                minZoom: 3.0,
                 initialRotation: -rawHeading,
                 onPositionChanged: (position, hasGesture) {
                   if (hasGesture && _isFollowingGps) {
@@ -95,7 +97,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
-                  keepBuffer: 4,
+                  maxNativeZoom: 18,
+                  keepBuffer: 6,
                 ),
                 if (route != null)
                   PolylineLayer(
