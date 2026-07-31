@@ -23,6 +23,9 @@ import '../../../eco_route/presentation/widgets/route_selector_sheet.dart';
 import '../../../../core/services/caravan_service.dart';
 import '../../../caravan/presentation/widgets/caravan_modal.dart';
 import '../../../incidents/presentation/widgets/sos_emergency_modal.dart';
+import '../widgets/weather_badge_widget.dart';
+import '../widgets/map_style_selector_sheet.dart';
+import '../../../incidents/presentation/widgets/quick_report_bar.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -48,8 +51,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   final List<String> _tileStyles = [
     'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-    'https://api.mapbox.com/styles/v1/mapbox/traffic-day-v1/tiles/256/{z}/{x}/{y}?access_token=${MapboxConstants.publicToken}',
     'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   ];
 
   String get _currentTileStyle {
@@ -518,10 +522,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
+          // Overlay Superior Izquierdo: Badge de Clima y Estado de Vía
+          if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
+            Positioned(
+              top: topInset + 66,
+              left: 12,
+              child: const WeatherBadgeWidget(
+                condition: '⛅ Sol Parcial',
+                tempCelsius: 24,
+                statusText: 'Vía Seca • Óptima',
+              ),
+            ),
+
           // Overlay Izquierdo: Velocímetro (Se oculta al desplegar lista de búsqueda para no estorbar)
           if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
             Positioned(
-              top: topInset + 120,
+              top: topInset + 115,
               left: 12,
               child: SpeedLimitBadge(
                 currentSpeedKmh: currentSpeed,
@@ -532,7 +548,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           // Overlay Derecho: Controles del Mapa 2D/3D (Se oculta al buscar para no tapar los resultados)
           if (!_isSearchingDropdownOpen)
             Positioned(
-              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 120),
+              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 115),
               right: 12,
               child: MapControlsWidget(
                 is3DMode: _is3DMode,
@@ -571,28 +587,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 },
                 isTrafficActive: _showTrafficFlow,
                 onToggleLayers: () {
-                  setState(() {
-                    _styleIndex = (_styleIndex + 1) % _tileStyles.length;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Capa de mapa cambiada a estilo ${_styleIndex == 0 ? "Waze Light" : _styleIndex == 1 ? "OpenStreet" : "Mapbox HD"}'),
-                      duration: const Duration(seconds: 1),
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    builder: (ctx) => MapStyleSelectorSheet(
+                      currentStyleIndex: _styleIndex,
+                      onSelectStyle: (idx) {
+                        setState(() => _styleIndex = idx);
+                      },
                     ),
                   );
                 },
               ),
             ),
 
-          // Overlay Inferior Central: Botón FAB de Reporte de Alertas e Insignia de Tráfico en Vivo (Imagen 2)
+          // Overlay Inferior Central: Tira de Reportes Rápidos en 1-Tap y Controles de Caravana
           if (navState.availableRoutes.isEmpty && !_isSearchingDropdownOpen)
             Positioned(
-              bottom: 24,
+              bottom: 20,
               left: 0,
               right: 0,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  QuickReportBar(
+                    onReport: (type, desc) {
+                      navNotifier.reportIncident(type, desc);
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

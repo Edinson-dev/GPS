@@ -10,6 +10,8 @@ import '../widgets/eta_bottom_bar.dart';
 import 'package:waypulse_app/features/map/presentation/widgets/speed_limit_badge.dart';
 import '../../../incidents/presentation/widgets/incident_fab_button.dart';
 import '../../../incidents/presentation/widgets/report_incident_modal.dart';
+import '../widgets/lane_guidance_widget.dart';
+import '../widgets/trip_summary_dialog.dart';
 
 class NavigationModeScreen extends ConsumerStatefulWidget {
   const NavigationModeScreen({super.key});
@@ -164,20 +166,33 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             ),
           ),
 
+
+
           // Banner Superior TomTom: Maniobra Actual y Sub-Banner "Luego en..."
           Positioned(
             top: topInset,
             left: 12,
             right: 12,
-            child: TurnInstructionBanner(
-              currentStep: currentStep,
-              nextStep: nextStep,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TurnInstructionBanner(
+                  currentStep: currentStep,
+                  nextStep: nextStep,
+                ),
+                const SizedBox(height: 6),
+                LaneGuidanceWidget(
+                  totalLanes: 4,
+                  activeLaneIndex: 1,
+                  nextManeuverText: currentStep?.instruction ?? 'Mantén el carril central',
+                ),
+              ],
             ),
           ),
 
           // Lado Izquierdo: Velocímetro Estilo TomTom
           Positioned(
-            top: topInset + (nextStep != null ? 150 : 110),
+            top: topInset + (nextStep != null ? 210 : 170),
             left: 12,
             child: SpeedLimitBadge(
               currentSpeedKmh: currentSpeed,
@@ -230,7 +245,23 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
               durationSeconds: route?.durationSeconds ?? 0.0,
               distanceMeters: route?.distanceMeters ?? 0.0,
               destinationName: navState.destinationName,
-              onStopNavigation: () => navNotifier.stopNavigation(),
+              onStopNavigation: () {
+                final distKm = (route?.distanceMeters ?? 0) / 1000.0;
+                final durationMin = ((route?.durationSeconds ?? 0) / 60.0).round();
+                final destName = navState.destinationName;
+
+                navNotifier.stopNavigation();
+
+                showDialog(
+                  context: context,
+                  builder: (ctx) => TripSummaryDialog(
+                    destinationName: destName,
+                    distanceKm: distKm,
+                    durationMinutes: durationMin,
+                    onClose: () => Navigator.pop(ctx),
+                  ),
+                );
+              },
             ),
           ),
         ],
