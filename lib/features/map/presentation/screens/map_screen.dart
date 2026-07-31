@@ -42,6 +42,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _is3DMode = true;
   int _styleIndex = 0;
   bool _hasCenteredInitialPos = false;
+  bool _isFollowingGps = true;
   bool _isSearchingDropdownOpen = false;
   bool _showTrafficFlow = true;
 
@@ -114,14 +115,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         if (!_hasCenteredInitialPos) {
           _hasCenteredInitialPos = true;
           _mapController.move(next.currentLocation!.position, 16.5);
-        } else if (previous?.currentLocation?.position != next.currentLocation?.position) {
+        } else if (_isFollowingGps && previous?.currentLocation?.position != next.currentLocation?.position) {
           // Seguir dinámicamente al usuario mientras camina o conduce por la ruta
           _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
-          _caravanService.broadcastPosition(
-            next.currentLocation!.position,
-            next.currentLocation!.speedKmh,
-          );
         }
+        _caravanService.broadcastPosition(
+          next.currentLocation!.position,
+          next.currentLocation!.speedKmh,
+        );
       }
 
       if (next.selectedRoute != null && next.destination != null && previous?.selectedRoute != next.selectedRoute) {
@@ -183,6 +184,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 initialZoom: 16.5,
                 maxZoom: 18.5,
                 minZoom: 3.0,
+                onPositionChanged: (position, hasGesture) {
+                  if (hasGesture && _isFollowingGps) {
+                    setState(() {
+                      _isFollowingGps = false;
+                    });
+                  }
+                },
               ),
               children: [
                 TileLayer(
@@ -598,7 +606,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   );
                 },
                 onRecenter: () {
-                  _hasCenteredInitialPos = true;
+                  setState(() {
+                    _isFollowingGps = true;
+                    _hasCenteredInitialPos = true;
+                  });
                   _mapController.move(currentPos, 17.5);
                   _mapController.rotate(0.0);
                   ScaffoldMessenger.of(context).showSnackBar(
