@@ -103,13 +103,16 @@ class CaravanService {
     required String vehicleType,
     required LatLng initialPosition,
   }) async {
-    final cleanCode = code.trim().toUpperCase();
+    String cleanCode = code.trim().toUpperCase();
+    if (!cleanCode.startsWith('RODADA-') && !cleanCode.startsWith('CARAVANA-')) {
+      cleanCode = 'RODADA-$cleanCode';
+    }
     currentGroupCode = cleanCode;
     currentMemberId = 'member_${Random().nextInt(99999)}';
 
     final member = CaravanMember(
       id: currentMemberId!,
-      nickname: nickname,
+      nickname: nickname.trim().isEmpty ? 'Conductor' : nickname.trim(),
       vehicleType: vehicleType,
       position: initialPosition,
       speedKmh: 0.0,
@@ -117,15 +120,13 @@ class CaravanService {
     );
 
     try {
-      final res = await _dio.get('$_dbUrl/$cleanCode.json');
-      if (res.statusCode == 200 && res.data != null) {
-        await _dio.put(
-          '$_dbUrl/$cleanCode/members/$currentMemberId.json',
-          data: member.toJson(),
-        );
-        _startSyncLoop();
-        return true;
-      }
+      // Registrar el miembro en la ruta del grupo en Firebase
+      await _dio.put(
+        '$_dbUrl/$cleanCode/members/$currentMemberId.json',
+        data: member.toJson(),
+      );
+      _startSyncLoop();
+      return true;
     } catch (_) {}
 
     return false;
@@ -185,8 +186,8 @@ class CaravanService {
         map.forEach((key, val) {
           if (val is Map) {
             final member = CaravanMember.fromJson(key.toString(), val.cast<String, dynamic>());
-            // Filtrar miembros activos en los últimos 10 minutos
-            if (now.difference(member.lastUpdated).inMinutes < 10) {
+            // Filtrar miembros activos recientemente (resistente a desfasajes de reloj)
+            if (now.difference(member.lastUpdated).inMinutes.abs() < 120) {
               list.add(member);
             }
           }

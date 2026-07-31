@@ -124,11 +124,113 @@ class _CaravanModalState extends State<CaravanModal> {
                       ],
                     ),
                     const SizedBox(height: 14),
+                    // Lista en Vivo de Integrantes
+                    StreamBuilder<List<CaravanMember>>(
+                      stream: widget.caravanService.membersStream,
+                      builder: (context, snapshot) {
+                        final members = snapshot.data ?? [];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'INTEGRANTES CONECTADOS',
+                                  style: TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${members.length} En Vivo',
+                                    style: const TextStyle(
+                                      color: Color(0xFF8B5CF6),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (members.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  'Esperando a que tus amigos ingresen el código...',
+                                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                                ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: members.length,
+                                separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 12),
+                                itemBuilder: (context, index) {
+                                  final m = members[index];
+                                  return Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: const Color(0xFF8B5CF6),
+                                        child: Icon(
+                                          m.vehicleType == 'bike' ? Icons.two_wheeler_rounded : Icons.directions_car_rounded,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          m.nickname,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black45,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '${m.speedKmh.toInt()} km/h',
+                                          style: const TextStyle(
+                                            color: Color(0xFF10B981),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 14),
                     ElevatedButton.icon(
                       onPressed: () async {
+                        final s = ScaffoldMessenger.of(context);
                         await widget.caravanService.leaveCaravan();
                         widget.onStateChanged();
-                        if (mounted) Navigator.pop(context);
+                        s.showSnackBar(
+                          const SnackBar(content: Text('Has salido de la caravana 👋')),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEF4444),

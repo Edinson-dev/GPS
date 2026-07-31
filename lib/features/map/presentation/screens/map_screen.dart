@@ -359,8 +359,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         .map(
                       (member) => Marker(
                         point: member.position,
-                        width: 52,
-                        height: 52,
+                        width: 90,
+                        height: 60,
                         child: GestureDetector(
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
