@@ -6,7 +6,7 @@ import '../../features/incidents/models/incident_model.dart';
 class RealtimeIncidentService {
   final Dio _dio = Dio();
   // Cloud Realtime Database Sync Endpoint (Firebase REST API Serverless Engine)
-  static const String _databaseUrl = 'https://flutter-ai-playground-52a35-default-rtdb.firebaseio.com/incidents';
+  static const String _databaseUrl = 'https://flutter-ai-playground-52ad9-default-rtdb.firebaseio.com/incidents';
 
   final StreamController<List<IncidentReport>> _incidentsStreamController =
       StreamController<List<IncidentReport>>.broadcast();

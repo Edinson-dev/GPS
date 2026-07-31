@@ -51,7 +51,7 @@ class CaravanMember {
 class CaravanService {
   final Dio _dio = Dio();
   static const String _dbUrl =
-      'https://flutter-ai-playground-52a35-default-rtdb.firebaseio.com/caravans';
+      'https://flutter-ai-playground-52ad9-default-rtdb.firebaseio.com/caravans';
 
   String? currentGroupCode;
   String? currentMemberId;
