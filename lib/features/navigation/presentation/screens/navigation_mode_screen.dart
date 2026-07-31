@@ -78,13 +78,14 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
               ),
               children: [
                 TileLayer(
+                  key: const ValueKey('waze_nav_permanent_tile_layer'),
                   urlTemplate:
                       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
-                  tileProvider: CancellableNetworkTileProvider(),
+                  tileProvider: NetworkTileProvider(),
                   maxZoom: 19,
-                  keepBuffer: 5,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
+                  keepBuffer: 8,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 0)),
                 ),
                 if (route != null)
                   PolylineLayer(

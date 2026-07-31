@@ -168,12 +168,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
               children: [
                 TileLayer(
+                  key: const ValueKey('waze_permanent_tile_layer'),
                   urlTemplate: _currentTileStyle,
                   userAgentPackageName: 'com.waypulse.waypulse_app',
-                  tileProvider: CancellableNetworkTileProvider(),
+                  tileProvider: NetworkTileProvider(),
                   maxZoom: 19,
-                  keepBuffer: 6,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 50)),
+                  keepBuffer: 8,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 0)),
                 ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(
