@@ -792,7 +792,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 selectedRoute: navState.selectedRoute,
                 onSelect: (route) => navNotifier.selectRoute(route),
                 onStartNavigation: () => navNotifier.startNavigation(),
-                onCancel: () => navNotifier.stopNavigation(),
+                onCancel: () => navNotifier.cancelRoute(),
                 picoPlacaResult: navState.picoPlacaResult,
               ),
             ),

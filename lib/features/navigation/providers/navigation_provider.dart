@@ -63,7 +63,25 @@ class NavigationState {
     TransportMode? selectedTransportMode,
     int? vehiclePlateDigit,
     ColombianCity? selectedCity,
+    bool clearRoute = false,
   }) {
+    if (clearRoute) {
+      return NavigationState(
+        currentLocation: currentLocation ?? this.currentLocation,
+        destination: null,
+        destinationName: '',
+        availableRoutes: const [],
+        selectedRoute: null,
+        isNavigating: false,
+        currentStepIndex: 0,
+        currentSpeedLimit: currentSpeedLimit ?? this.currentSpeedLimit,
+        activeIncidents: activeIncidents ?? this.activeIncidents,
+        pulsePoints: pulsePoints ?? this.pulsePoints,
+        selectedTransportMode: selectedTransportMode ?? this.selectedTransportMode,
+        vehiclePlateDigit: vehiclePlateDigit ?? this.vehiclePlateDigit,
+        selectedCity: selectedCity ?? this.selectedCity,
+      );
+    }
     return NavigationState(
       currentLocation: currentLocation ?? this.currentLocation,
       destination: destination ?? this.destination,
@@ -262,15 +280,14 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     }
   }
 
+  void cancelRoute() {
+    _ttsService.speakInstruction('Ruta cancelada.');
+    state = state.copyWith(clearRoute: true);
+  }
+
   void stopNavigation() {
     _ttsService.speakInstruction('Navegación finalizada.');
-    state = state.copyWith(
-      isNavigating: false,
-      selectedRoute: null,
-      availableRoutes: [],
-      destination: null,
-      destinationName: '',
-    );
+    state = state.copyWith(clearRoute: true);
   }
 
   void reportIncident(IncidentType type, String description) {
