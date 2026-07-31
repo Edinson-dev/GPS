@@ -419,6 +419,73 @@ class ColombiaPoiDatabase {
       position: const LatLng(6.2567, -75.5903),
       keywords: ['estadio atanasio', 'unidad deportiva', 'estadio medellin'],
     ),
+
+    // ----------------------------------------------------
+    // PARQUES EMBLEMÁTICOS Y LUGARES EMBLEMÁTICOS DE COLOMBIA
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Parque de las Luces (Plaza de Cisneros)',
+      address: 'Medellín, Antioquia (Calle 44 # 52-50 - El Centro)',
+      category: 'landmark',
+      position: const LatLng(6.2458, -75.5714),
+      keywords: ['parque de las luces', 'plaza cisneros', 'luces', 'biblioteca epm', 'cisneros'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Lleras',
+      address: 'Medellín, Antioquia (Carrera 37A # 9-15 - El Poblado)',
+      category: 'landmark',
+      position: const LatLng(6.2086, -75.5678),
+      keywords: ['parque lleras', 'lleras', 'poblado lleras', 'zona rosa'],
+    ),
+    LocalPoiItem(
+      title: 'Plaza Botero (Museo de Antioquia)',
+      address: 'Medellín, Antioquia (Carrera 52 # 52-43 - Centro)',
+      category: 'landmark',
+      position: const LatLng(6.2517, -75.5681),
+      keywords: ['plaza botero', 'esculturas botero', 'museo de antioquia', 'botero'],
+    ),
+    LocalPoiItem(
+      title: 'Pueblito Paisa (Cerro Nutibara)',
+      address: 'Medellín, Antioquia (Calle 30A # 55-64)',
+      category: 'landmark',
+      position: const LatLng(6.2367, -75.5789),
+      keywords: ['pueblito paisa', 'cerro nutibara', 'nutibara', 'mirador medellin'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Explora & Planetario',
+      address: 'Medellín, Antioquia (Carrera 52 # 73-75)',
+      category: 'landmark',
+      position: const LatLng(6.2708, -75.5658),
+      keywords: ['parque explora', 'explora', 'planetario', 'acuario explora'],
+    ),
+    LocalPoiItem(
+      title: 'Jardín Botánico Joaquín Antonio Uribe',
+      address: 'Medellín, Antioquia (Calle 73 # 51D-14)',
+      category: 'landmark',
+      position: const LatLng(6.2703, -75.5639),
+      keywords: ['jardin botanico', 'orquideorama', 'botanico'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Arví',
+      address: 'Medellín, Santa Elena (Metrocable L)',
+      category: 'landmark',
+      position: const LatLng(6.2819, -75.5036),
+      keywords: ['parque arvi', 'arvi', 'santa elena', 'metrocable arvi'],
+    ),
+    LocalPoiItem(
+      title: 'Parque de los Deseos',
+      address: 'Medellín, Antioquia (Carrera 52 # 71-117)',
+      category: 'landmark',
+      position: const LatLng(6.2683, -75.5658),
+      keywords: ['parque de los deseos', 'deseos', 'casa de la musica'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Simón Bolívar (Montería, Córdoba)',
+      address: 'Montería, Córdoba (Carrera 3 con Calle 27)',
+      category: 'landmark',
+      position: const LatLng(8.7564, -75.8872),
+      keywords: ['parque simon bolivar monteria', 'monteria', 'cordoba', 'parque centro monteria'],
+    ),
   ];
 
   static List<LocalPoiItem> searchLocalPois(String query) {
