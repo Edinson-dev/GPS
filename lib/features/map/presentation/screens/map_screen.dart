@@ -207,7 +207,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   maxZoom: 19,
                   maxNativeZoom: 18,
                   keepBuffer: 8,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 0)),
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 150)),
                 ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(
