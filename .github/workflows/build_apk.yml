@@ -41,6 +41,8 @@ jobs:
           echo "MAPBOX_DOWNLOADS_TOKEN=$TOKEN" >> ~/.gradle/gradle.properties
 
       - name: Build Release APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m'"
         run: |
           if [ -d "GPS" ]; then
             cd GPS
