@@ -486,6 +486,194 @@ class ColombiaPoiDatabase {
       position: const LatLng(8.7564, -75.8872),
       keywords: ['parque simon bolivar monteria', 'monteria', 'cordoba', 'parque centro monteria'],
     ),
+
+    // ----------------------------------------------------
+    // BOGOTÁ D.C. Y CUNDINAMARCA
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Cerro de Monserrate',
+      address: 'Bogotá D.C. (Carrera 2 Este # 21-48)',
+      category: 'landmark',
+      position: const LatLng(4.6058, -74.0556),
+      keywords: ['monserrate', 'cerro de monserrate', 'bogota', 'santuario monserrate'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio La Candelaria (Centro Histórico)',
+      address: 'Bogotá D.C. (Calle 10 con Carrera 3)',
+      category: 'neighborhood',
+      position: const LatLng(4.5969, -74.0728),
+      keywords: ['la candelaria', 'candelaria', 'centro historico bogota', 'plaza de bolivar'],
+    ),
+    LocalPoiItem(
+      title: 'Parque de la 93',
+      address: 'Bogotá D.C. (Calle 93 # 11A-11 - Chapinero)',
+      category: 'landmark',
+      position: const LatLng(4.6767, -74.0483),
+      keywords: ['parque de la 93', 'parque 93', 'zona rosa bogota', 'chapinero'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Metropolitano Simón Bolívar',
+      address: 'Bogotá D.C. (Calle 63 y Calle 53 - Teusaquillo)',
+      category: 'landmark',
+      position: const LatLng(4.6583, -74.0939),
+      keywords: ['parque simon bolivar bogota', 'simon bolivar', 'teusaquillo'],
+    ),
+    LocalPoiItem(
+      title: 'Aeropuerto Internacional El Dorado (BOG)',
+      address: 'Bogotá D.C. (Avenida El Dorado # 103-9)',
+      category: 'airport',
+      position: const LatLng(4.7016, -74.1469),
+      keywords: ['el dorado', 'aeropuerto el dorado', 'bogota airport', 'bog'],
+    ),
+    LocalPoiItem(
+      title: 'Catedral de Sal de Zipaquirá',
+      address: 'Zipaquirá, Cundinamarca (Parque de la Sal)',
+      category: 'landmark',
+      position: const LatLng(5.0189, -74.0094),
+      keywords: ['catedral de sal', 'zipaquira', 'cundinamarca', 'mina de sal'],
+    ),
+
+    // ----------------------------------------------------
+    // COSTA CARIBE (CARTAGENA, BARRANQUILLA, SANTA MARTA, MONTERÍA)
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Ciudad Amurallada de Cartagena',
+      address: 'Cartagena, Bolívar (Centro Histórico)',
+      category: 'landmark',
+      position: const LatLng(10.4236, -75.5511),
+      keywords: ['ciudad amurallada', 'cartagena', 'centro historico cartagena', 'torre del reloj'],
+    ),
+    LocalPoiItem(
+      title: 'Castillo de San Felipe de Barajas',
+      address: 'Cartagena, Bolívar (Pie de la Popa)',
+      category: 'landmark',
+      position: const LatLng(10.4225, -75.5392),
+      keywords: ['castillo san felipe', 'san felipe', 'cartagena castillo'],
+    ),
+    LocalPoiItem(
+      title: 'Barrio Bocagrande',
+      address: 'Cartagena, Bolívar (Avenida San Martín)',
+      category: 'neighborhood',
+      position: const LatLng(10.4022, -75.5558),
+      keywords: ['bocagrande', 'playa bocagrande', 'cartagena bocagrande'],
+    ),
+    LocalPoiItem(
+      title: 'Gran Malecón del Río',
+      address: 'Barranquilla, Atlántico (Vía 40)',
+      category: 'landmark',
+      position: const LatLng(11.0117, -74.7825),
+      keywords: ['gran malecon', 'malecon del rio', 'barranquilla', 'malecon'],
+    ),
+    LocalPoiItem(
+      title: 'Monumento Ventana al Mundo',
+      address: 'Barranquilla, Atlántico (Circunvalar)',
+      category: 'landmark',
+      position: const LatLng(11.0267, -74.8250),
+      keywords: ['ventana al mundo', 'barranquilla ventana', 'monumento barranquilla'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Nacional Natural Tayrona',
+      address: 'Santa Marta, Magdalena (Vía Riohacha)',
+      category: 'landmark',
+      position: const LatLng(11.3108, -74.0733),
+      keywords: ['tayrona', 'parque tayrona', 'cabo san juan', 'santa marta tayrona'],
+    ),
+    LocalPoiItem(
+      title: 'El Rodadero',
+      address: 'Santa Marta, Magdalena (Carrera 1)',
+      category: 'neighborhood',
+      position: const LatLng(11.2056, -74.2289),
+      keywords: ['el rodadero', 'rodadero', 'santa marta rodadero', 'playa rodadero'],
+    ),
+    LocalPoiItem(
+      title: 'Ronda del Sinú (Montería)',
+      address: 'Montería, Córdoba (Avenida Primera / Carrera 1)',
+      category: 'landmark',
+      position: const LatLng(8.7533, -75.8889),
+      keywords: ['ronda del sinu', 'rio sinu', 'monteria ronda', 'parque lineal'],
+    ),
+
+    // ----------------------------------------------------
+    // CALI Y VALLE DEL CAUCA
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Cristo Rey (Cali)',
+      address: 'Cali, Valle del Cauca (Corregimiento Los Andes)',
+      category: 'landmark',
+      position: const LatLng(3.4358, -76.5658),
+      keywords: ['cristo rey cali', 'cristo rey', 'cali mirador'],
+    ),
+    LocalPoiItem(
+      title: 'Bulevar del Río & Iglesia La Ermita',
+      address: 'Cali, Valle del Cauca (Avenida Colombia - Centro)',
+      category: 'landmark',
+      position: const LatLng(3.4525, -76.5328),
+      keywords: ['bulevar del rio', 'la ermita', 'cali centro', 'ermita'],
+    ),
+    LocalPoiItem(
+      title: 'Aeropuerto Internacional Alfonso Bonilla Aragón (CLO)',
+      address: 'Palmira / Cali, Valle del Cauca',
+      category: 'airport',
+      position: const LatLng(3.5431, -76.3816),
+      keywords: ['bonilla aragon', 'aeropuerto cali', 'clo', 'palmira airport'],
+    ),
+
+    // ----------------------------------------------------
+    // EJE CAFETERO (SALENTO, COCORA, PARQUE DEL CAFÉ)
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Valle de Cocora & Salento',
+      address: 'Salento, Quindío (Vía Valle de Cocora)',
+      category: 'landmark',
+      position: const LatLng(4.6383, -75.5458),
+      keywords: ['valle de cocora', 'cocora', 'salento', 'palmas de cera', 'quindio'],
+    ),
+    LocalPoiItem(
+      title: 'Parque Nacional del Café',
+      address: 'Montenegro, Quindío (Km 4 Vía Pueblo Tapao)',
+      category: 'landmark',
+      position: const LatLng(4.5408, -75.7708),
+      keywords: ['parque del cafe', 'parque nacional del cafe', 'montenegro', 'quindio'],
+    ),
+    LocalPoiItem(
+      title: 'Nevado del Ruiz',
+      address: 'Manizales / Tolima / Caldas (Parque Nacional Los Nevados)',
+      category: 'landmark',
+      position: const LatLng(4.8925, -75.3189),
+      keywords: ['nevado del ruiz', 'los nevados', 'manizales', 'volcan ruiz'],
+    ),
+
+    // ----------------------------------------------------
+    // SANTANDERES Y PACÍFICO / SUR DE COLOMBIA
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Parque Nacional del Chicamocha (PANACHI)',
+      address: 'Aratoca, Santander (Vía Bucaramanga - San Gil)',
+      category: 'landmark',
+      position: const LatLng(6.7908, -73.0039),
+      keywords: ['panachi', 'chicamocha', 'canon del chicamocha', 'santander'],
+    ),
+    LocalPoiItem(
+      title: 'Santuario de Nuestra Señora de Las Lajas',
+      address: 'Ipiales, Nariño (Corregimiento de Las Lajas)',
+      category: 'landmark',
+      position: const LatLng(0.8053, -77.5861),
+      keywords: ['las lajas', 'santuario las lajas', 'ipiales', 'narino'],
+    ),
+    LocalPoiItem(
+      title: 'Desierto de la Tatacoa',
+      address: 'Villavieja, Huila (A 38 km de Neiva)',
+      category: 'landmark',
+      position: const LatLng(3.2308, -75.1678),
+      keywords: ['tatacoa', 'desierto de la tatacoa', 'huila', 'villavieja'],
+    ),
+    LocalPoiItem(
+      title: 'Caño Cristales (El Río de los 5 Colores)',
+      address: 'La Macarena, Meta (Serranía de la Macarena)',
+      category: 'landmark',
+      position: const LatLng(2.2567, -73.7878),
+      keywords: ['cano cristales', 'rio de 5 colores', 'la macarena', 'meta'],
+    ),
   ];
 
   static List<LocalPoiItem> searchLocalPois(String query) {
