@@ -523,11 +523,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   );
                 },
                 onRecenter: () {
-                  _mapController.move(currentPos, 16.5);
+                  _hasCenteredInitialPos = true;
+                  _mapController.move(currentPos, 17.5);
                   _mapController.rotate(0.0);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Recentrado en tu ubicación GPS actual'),
+                      content: Text('🎯 Recentrado y rastreo GPS 3D activado'),
                       duration: Duration(seconds: 1),
                     ),
                   );

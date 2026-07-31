@@ -20,6 +20,7 @@ class NavigationModeScreen extends ConsumerStatefulWidget {
 
 class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
   late final MapController _mapController;
+  bool _isFollowingGps = true;
 
   @override
   void initState() {
@@ -27,32 +28,17 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     _mapController = MapController();
   }
 
-  @override
-  void dispose() {
-    _mapController.dispose();
-    super.dispose();
+  void _recenterGps(LatLng currentPos) {
+    setState(() {
+      _isFollowingGps = true;
+    });
+    _mapController.move(currentPos, 18.5);
   }
 
   @override
   Widget build(BuildContext context) {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
-
-    // Escuchar cambios de posición y rumbo para centrar y orientar la cámara en vivo
-    ref.listen(navigationProvider, (previous, next) {
-      if (next.currentLocation != null) {
-        final pos = next.currentLocation!.position;
-        final heading = next.currentLocation!.heading;
-        
-        // Mover cámara al vehículo
-        _mapController.move(pos, _mapController.camera.zoom);
-        
-        // Rotar cámara hacia la dirección de movimiento si se tiene rumbo válido
-        if (heading != 0.0) {
-          _mapController.rotate(heading);
-        }
-      }
-    });
 
     final route = navState.selectedRoute;
     final currentStep = (route != null && navState.currentStepIndex < route.steps.length)
@@ -62,62 +48,98 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
     final currentPos = navState.currentLocation?.position ??
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
+    final currentHeading = (navState.currentLocation?.heading ?? 0.0) * (3.141592653589793 / 180.0);
 
     final topInset = MediaQuery.of(context).padding.top + 10;
+
+    // Escuchar movimiento continuo del GPS para actualizar posición del vehículo en tiempo real
+    ref.listen(navigationProvider, (previous, next) {
+      if (_isFollowingGps && next.currentLocation != null) {
+        if (previous?.currentLocation?.position != next.currentLocation?.position) {
+          _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+        }
+      }
+    });
 
     return Scaffold(
       body: Stack(
         children: [
-          // Visor de Navegación 3D Mapbox Night
+          // Visor de Navegación 3D en Perspectiva Cercana (Zoom 18.5)
           Positioned.fill(
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
-                initialZoom: 17.0,
+                initialZoom: 18.5,
+                onPositionChanged: (position, hasGesture) {
+                  if (hasGesture && _isFollowingGps) {
+                    setState(() {
+                      _isFollowingGps = false;
+                    });
+                  }
+                },
               ),
               children: [
                 TileLayer(
-                  key: const ValueKey('waze_nav_permanent_tile_layer'),
                   urlTemplate:
                       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
-                  tileProvider: NetworkTileProvider(),
+                  tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
-                  keepBuffer: 8,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 0)),
+                  keepBuffer: 4,
                 ),
                 if (route != null)
                   PolylineLayer(
                     polylines: [
+                      // Línea neón cian 3D trazando la ruta
                       Polyline(
                         points: route.polylinePoints,
                         color: const Color(0xFF00C8FF),
-                        strokeWidth: 8.0,
+                        strokeWidth: 10.0,
                       ),
                     ],
                   ),
                 MarkerLayer(
                   markers: [
+                    // Puntero Navegador 3D con Rotación por Brújula
                     Marker(
                       point: currentPos,
-                      width: 50,
-                      height: 50,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00C8FF),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00C8FF).withOpacity(0.6),
-                              blurRadius: 16,
+                      width: 58,
+                      height: 58,
+                      child: Transform.rotate(
+                        angle: currentHeading,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00C8FF).withOpacity(0.35),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00C8FF).withOpacity(0.8),
+                                    blurRadius: 20,
+                                    spreadRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0F172A),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.navigation_rounded,
+                                color: Color(0xFF00C8FF),
+                                size: 28,
+                              ),
                             ),
                           ],
-                        ),
-                        child: const Icon(
-                          Icons.navigation,
-                          color: Colors.white,
-                          size: 30,
                         ),
                       ),
                     ),
@@ -127,7 +149,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             ),
           ),
 
-          // Banner Superior: Próxima Maniobra e Instrucción por Voz (Safe Inset)
+          // Banner Superior: Próxima Maniobra e Instrucción por Voz
           Positioned(
             top: topInset,
             left: 12,
@@ -142,6 +164,23 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             child: SpeedLimitBadge(
               currentSpeedKmh: currentSpeed,
               speedLimitKmh: navState.currentSpeedLimit,
+            ),
+          ),
+
+          // Lado Derecho: Botón Flotante "Centrar GPS"
+          Positioned(
+            bottom: 180,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: 'recenter_gps_nav_fab',
+              onPressed: () => _recenterGps(currentPos),
+              backgroundColor: _isFollowingGps ? const Color(0xFF00C8FF) : const Color(0xFF1E293B),
+              elevation: 6,
+              child: Icon(
+                _isFollowingGps ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
             ),
           ),
 
@@ -180,70 +219,4 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
       ),
     );
   }
-}
-
-class Navigation3DPainter extends CustomPainter {
-  final double heading;
-
-  Navigation3DPainter({required this.heading});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bottomCenter = Offset(size.width / 2, size.height * 0.85);
-    final horizonCenter = Offset(size.width / 2, size.height * 0.35);
-
-    // Degradado del horizonte nocturno estilo Mapbox Navigation Night
-    final bgGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: const [Color(0xFF0B132B), Color(0xFF1C2541), Color(0xFF0B132B)],
-    );
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    canvas.drawRect(rect, Paint()..shader = bgGradient.createShader(rect));
-
-    // Perspectiva de Calzada 3D
-    final roadPath = Path()
-      ..moveTo(horizonCenter.dx - 30, horizonCenter.dy)
-      ..lineTo(horizonCenter.dx + 30, horizonCenter.dy)
-      ..lineTo(bottomCenter.dx + 160, size.height)
-      ..lineTo(bottomCenter.dx - 160, size.height)
-      ..close();
-
-    final roadPaint = Paint()..color = const Color(0xFF1E293B);
-    canvas.drawPath(roadPath, roadPaint);
-
-    // Trazado Neón de Ruta Activa
-    final routePath = Path()
-      ..moveTo(horizonCenter.dx, horizonCenter.dy + 20)
-      ..lineTo(bottomCenter.dx, bottomCenter.dy);
-
-    final routePaint = Paint()
-      ..color = const Color(0xFF00C8FF)
-      ..strokeWidth = 14
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawPath(routePath, routePaint);
-
-    // Indicador 3D del Vehículo (Puntero estilo Waze Arrow)
-    final arrowPath = Path()
-      ..moveTo(bottomCenter.dx, bottomCenter.dy - 20)
-      ..lineTo(bottomCenter.dx - 15, bottomCenter.dy + 15)
-      ..lineTo(bottomCenter.dx, bottomCenter.dy + 8)
-      ..lineTo(bottomCenter.dx + 15, bottomCenter.dy + 15)
-      ..close();
-
-    canvas.drawPath(arrowPath, Paint()..color = Colors.white);
-    canvas.drawPath(
-      arrowPath,
-      Paint()
-        ..color = const Color(0xFF00C8FF)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
