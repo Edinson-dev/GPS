@@ -73,7 +73,7 @@ class MapboxGeocodingService {
     // Formatear dirección colombiana (ej: "cra 71 c # 89 a 13" -> "Carrera 71C #89A-13")
     final expandedQuery = _normalizeColombianAddress(trimmed);
 
-    // Si la ubicación del usuario no está disponible, anclar la proximidad al centro de Medellín/Valle de Aburrá
+    // Ubicación de referencia para anclar proximidad (Medellín / Colombia)
     final effectiveProximity = proximity ?? const LatLng(6.2494, -75.5681);
 
     final url = '${MapboxConstants.geocodingBaseUrl}/${Uri.encodeComponent(expandedQuery)}.json';
@@ -84,7 +84,6 @@ class MapboxGeocodingService {
       'language': 'es',
       'country': 'co', // Restringir a Colombia
       'proximity': '${effectiveProximity.longitude},${effectiveProximity.latitude}',
-      'types': 'neighborhood,address,poi,place,locality',
     };
 
     try {

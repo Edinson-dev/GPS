@@ -11,13 +11,48 @@ import 'package:waypulse_app/features/map/presentation/widgets/speed_limit_badge
 import '../../../incidents/presentation/widgets/incident_fab_button.dart';
 import '../../../incidents/presentation/widgets/report_incident_modal.dart';
 
-class NavigationModeScreen extends ConsumerWidget {
+class NavigationModeScreen extends ConsumerStatefulWidget {
   const NavigationModeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NavigationModeScreen> createState() => _NavigationModeScreenState();
+}
+
+class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
+  late final MapController _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
+
+    // Escuchar cambios de posición y rumbo para centrar y orientar la cámara en vivo
+    ref.listen(navigationProvider, (previous, next) {
+      if (next.currentLocation != null) {
+        final pos = next.currentLocation!.position;
+        final heading = next.currentLocation!.heading;
+        
+        // Mover cámara al vehículo
+        _mapController.move(pos, _mapController.camera.zoom);
+        
+        // Rotar cámara hacia la dirección de movimiento si se tiene rumbo válido
+        if (heading != 0.0) {
+          _mapController.rotate(heading);
+        }
+      }
+    });
 
     final route = navState.selectedRoute;
     final currentStep = (route != null && navState.currentStepIndex < route.steps.length)
@@ -36,6 +71,7 @@ class NavigationModeScreen extends ConsumerWidget {
           // Visor de Navegación 3D Mapbox Night
           Positioned.fill(
             child: FlutterMap(
+              mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
                 initialZoom: 17.0,
@@ -47,6 +83,8 @@ class NavigationModeScreen extends ConsumerWidget {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
+                  keepBuffer: 5,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
                 if (route != null)
                   PolylineLayer(

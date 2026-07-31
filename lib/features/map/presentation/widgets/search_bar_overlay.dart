@@ -120,6 +120,17 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                 child: TextField(
                   controller: _controller,
                   onChanged: _onSearchChanged,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (query) {
+                    if (_searchResults.isNotEmpty) {
+                      final first = _searchResults.first;
+                      FocusScope.of(context).unfocus();
+                      widget.onPlaceSelected(first.position, first.title);
+                      _controller.clear();
+                      setState(() => _searchResults = []);
+                      widget.onSearchingStateChanged?.call(false);
+                    }
+                  },
                   style: const TextStyle(color: Colors.white, fontSize: 15),
                   decoration: const InputDecoration(
                     hintText: '¿A dónde quieres ir? (Dirección exacta)',
@@ -206,6 +217,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                       style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                     ),
                     onTap: () {
+                      FocusScope.of(context).unfocus();
                       widget.onPlaceSelected(item.position, item.title);
                       _controller.clear();
                       setState(() => _searchResults = []);

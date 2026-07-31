@@ -85,6 +85,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         CameraFit.bounds(
           bounds: bounds,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 140),
+          maxZoom: 15.0,
         ),
       );
     } catch (_) {}
@@ -171,8 +172,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
-                  keepBuffer: 3,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 150)),
+                  keepBuffer: 6,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 50)),
                 ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(

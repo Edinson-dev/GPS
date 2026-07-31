@@ -173,6 +173,13 @@ class ColombiaPoiDatabase {
     // METRO DE MEDELLÍN - LÍNEA B (Occidente)
     // ----------------------------------------------------
     LocalPoiItem(
+      title: 'Estación Metro Cisneros',
+      address: 'Medellín (Calle 44 # 57-10 - Parque de Las Luces)',
+      category: 'metro',
+      position: const LatLng(6.2464, -75.5744),
+      keywords: ['cisneros', 'metro cisneros', 'estacion cisneros', 'parque de las luces', 'san juan'],
+    ),
+    LocalPoiItem(
       title: 'Estación Metro Suramericana',
       address: 'Medellín (Calle 48 # 65-10)',
       category: 'metro',
@@ -206,6 +213,59 @@ class ColombiaPoiDatabase {
       category: 'metro',
       position: const LatLng(6.2481, -75.6119),
       keywords: ['san javier', 'metro san javier', 'comuna 13', 'metrocable', 'estacion san javier'],
+    ),
+
+    // ----------------------------------------------------
+    // METROPLÚS - LÍNEA 1 & 2
+    // ----------------------------------------------------
+    LocalPoiItem(
+      title: 'Estación Metroplús Universidad de Medellín',
+      address: 'Medellín (Calle 30 # 87-20 - Belén)',
+      category: 'metroplus',
+      position: const LatLng(6.2317, -75.6094),
+      keywords: ['u de m', 'universidad de medellin', 'metroplus u de m', 'estacion udem'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús Los Alpes',
+      address: 'Medellín (Calle 30 # 83-10 - Belén)',
+      category: 'metroplus',
+      position: const LatLng(6.2325, -75.6050),
+      keywords: ['los alpes', 'metroplus los alpes', 'estacion los alpes'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús La Palma',
+      address: 'Medellín (Calle 30 # 80-15 - Belén)',
+      category: 'metroplus',
+      position: const LatLng(6.2333, -75.6006),
+      keywords: ['la palma', 'metroplus la palma', 'estacion la palma'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús Parque de Belén',
+      address: 'Medellín (Calle 30 # 76-10 - Belén)',
+      category: 'metroplus',
+      position: const LatLng(6.2344, -75.5961),
+      keywords: ['parque belen', 'metroplus belen', 'estacion parque de belen'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús Rosales',
+      address: 'Medellín (Calle 30 # 70-20 - Belén Rosales)',
+      category: 'metroplus',
+      position: const LatLng(6.2356, -75.5906),
+      keywords: ['rosales', 'metroplus rosales', 'estacion rosales'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús Fátima',
+      address: 'Medellín (Calle 30 # 65-10 - Fátima)',
+      category: 'metroplus',
+      position: const LatLng(6.2367, -75.5842),
+      keywords: ['fatima', 'metroplus fatima', 'estacion fatima'],
+    ),
+    LocalPoiItem(
+      title: 'Estación Metroplús Nutibara / Pueblito Paisa',
+      address: 'Medellín (Calle 30 # 55-20)',
+      category: 'metroplus',
+      position: const LatLng(6.2375, -75.5789),
+      keywords: ['nutibara', 'metroplus nutibara', 'pueblito paisa', 'estacion nutibara'],
     ),
 
     // ----------------------------------------------------
