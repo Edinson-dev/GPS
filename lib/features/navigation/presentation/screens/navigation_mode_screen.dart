@@ -28,11 +28,12 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     _mapController = MapController();
   }
 
-  void _recenterGps(LatLng currentPos) {
+  void _recenterGps(LatLng currentPos, double heading) {
     setState(() {
       _isFollowingGps = true;
     });
     _mapController.move(currentPos, 18.5);
+    _mapController.rotate(-heading);
   }
 
   @override
@@ -41,22 +42,29 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     final navNotifier = ref.read(navigationProvider.notifier);
 
     final route = navState.selectedRoute;
-    final currentStep = (route != null && navState.currentStepIndex < route.steps.length)
-        ? route.steps[navState.currentStepIndex]
+    final currentStepIndex = navState.currentStepIndex;
+    final currentStep = (route != null && currentStepIndex < route.steps.length)
+        ? route.steps[currentStepIndex]
+        : null;
+    final nextStep = (route != null && (currentStepIndex + 1) < route.steps.length)
+        ? route.steps[currentStepIndex + 1]
         : null;
 
     final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
     final currentPos = navState.currentLocation?.position ??
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
-    final currentHeading = (navState.currentLocation?.heading ?? 0.0) * (3.141592653589793 / 180.0);
+    final rawHeading = navState.currentLocation?.heading ?? 0.0;
+    final currentHeadingRad = rawHeading * (3.141592653589793 / 180.0);
 
     final topInset = MediaQuery.of(context).padding.top + 10;
 
-    // Escuchar movimiento continuo del GPS para actualizar posición del vehículo en tiempo real
+    // Escuchar movimiento continuo del GPS para actualizar cámara en orientación Heading-Up (TomTom 3D)
     ref.listen(navigationProvider, (previous, next) {
       if (_isFollowingGps && next.currentLocation != null) {
-        if (previous?.currentLocation?.position != next.currentLocation?.position) {
+        if (previous?.currentLocation?.position != next.currentLocation?.position ||
+            previous?.currentLocation?.heading != next.currentLocation?.heading) {
           _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+          _mapController.rotate(- (next.currentLocation!.heading));
         }
       }
     });
@@ -64,13 +72,14 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Visor de Navegación 3D en Perspectiva Cercana (Zoom 18.5)
+          // Visor de Navegación 3D en Perspectiva TomTom GO (Zoom 18.5 Heading-Up)
           Positioned.fill(
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
                 initialZoom: 18.5,
+                initialRotation: -rawHeading,
                 onPositionChanged: (position, hasGesture) {
                   if (hasGesture && _isFollowingGps) {
                     setState(() {
@@ -91,53 +100,56 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                 if (route != null)
                   PolylineLayer(
                     polylines: [
-                      // Línea neón cian 3D trazando la ruta
+                      // Línea principal de ruta TomTom Azul Neón
                       Polyline(
                         points: route.polylinePoints,
-                        color: const Color(0xFF00C8FF),
-                        strokeWidth: 10.0,
+                        color: const Color(0xFF0070F3),
+                        strokeWidth: 11.0,
+                      ),
+                      // Tramo de tráfico activo en verde sobre la ruta libre
+                      Polyline(
+                        points: route.polylinePoints,
+                        color: const Color(0xFF10B981),
+                        strokeWidth: 4.0,
                       ),
                     ],
                   ),
                 MarkerLayer(
                   markers: [
-                    // Puntero Navegador 3D con Rotación por Brújula
+                    // Puntero Chevron 3D TomTom Azul Eléctrico con Sombra de Profundidad
                     Marker(
                       point: currentPos,
-                      width: 58,
-                      height: 58,
+                      width: 64,
+                      height: 64,
                       child: Transform.rotate(
-                        angle: currentHeading,
+                        angle: _isFollowingGps ? 0.0 : currentHeadingRad,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             Container(
-                              width: 54,
-                              height: 54,
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00C8FF).withOpacity(0.35),
+                                color: const Color(0xFF0070F3).withValues(alpha: 0.25),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF00C8FF).withOpacity(0.8),
-                                    blurRadius: 20,
-                                    spreadRadius: 4,
+                                    color: const Color(0xFF0070F3).withValues(alpha: 0.6),
+                                    blurRadius: 24,
+                                    spreadRadius: 6,
                                   ),
                                 ],
                               ),
                             ),
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF0F172A),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.navigation_rounded,
-                                color: Color(0xFF00C8FF),
-                                size: 28,
-                              ),
+                            const Icon(
+                              Icons.navigation_rounded,
+                              color: Color(0xFF0070F3),
+                              size: 44,
+                            ),
+                            const Icon(
+                              Icons.navigation_rounded,
+                              color: Colors.white,
+                              size: 34,
                             ),
                           ],
                         ),
@@ -149,17 +161,20 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             ),
           ),
 
-          // Banner Superior: Próxima Maniobra e Instrucción por Voz
+          // Banner Superior TomTom: Maniobra Actual y Sub-Banner "Luego en..."
           Positioned(
             top: topInset,
             left: 12,
             right: 12,
-            child: TurnInstructionBanner(currentStep: currentStep),
+            child: TurnInstructionBanner(
+              currentStep: currentStep,
+              nextStep: nextStep,
+            ),
           ),
 
-          // Lado Izquierdo: Velocímetro
+          // Lado Izquierdo: Velocímetro Estilo TomTom
           Positioned(
-            top: topInset + 105,
+            top: topInset + (nextStep != null ? 150 : 110),
             left: 12,
             child: SpeedLimitBadge(
               currentSpeedKmh: currentSpeed,
@@ -173,8 +188,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             right: 16,
             child: FloatingActionButton(
               heroTag: 'recenter_gps_nav_fab',
-              onPressed: () => _recenterGps(currentPos),
-              backgroundColor: _isFollowingGps ? const Color(0xFF00C8FF) : const Color(0xFF1E293B),
+              onPressed: () => _recenterGps(currentPos, rawHeading),
+              backgroundColor: _isFollowingGps ? const Color(0xFF0070F3) : const Color(0xFF1E293B),
               elevation: 6,
               child: Icon(
                 _isFollowingGps ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
@@ -203,7 +218,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             ),
           ),
 
-          // Barra Inferior: ETA, Tiempos, Distancia y Finalizar Navegación
+          // Barra Inferior: ETA, Tiempos, Distancia y Finalizar Navegación (TomTom Clean White Card)
           Positioned(
             bottom: 0,
             left: 0,
