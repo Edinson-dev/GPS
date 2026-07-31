@@ -160,6 +160,31 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                         ),
                       ),
                     ),
+                    // Marcador de Destino Final Iluminado Neón
+                    if (navState.destination != null)
+                      Marker(
+                        point: navState.destination!,
+                        width: 52,
+                        height: 52,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF2E55),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF2E55).withValues(alpha: 0.6),
+                                blurRadius: 18,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.flag_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],
