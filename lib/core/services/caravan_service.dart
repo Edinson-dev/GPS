@@ -60,6 +60,24 @@ class CaravanService {
   final _membersController = StreamController<List<CaravanMember>>.broadcast();
   Stream<List<CaravanMember>> get membersStream => _membersController.stream;
 
+  final _announcementsController = StreamController<String>.broadcast();
+  Stream<String> get announcementsStream => _announcementsController.stream;
+
+  Future<void> sendAnnouncement(String message) async {
+    if (currentGroupCode == null) return;
+
+    try {
+      await _dio.post(
+        '$_dbUrl/$currentGroupCode/announcements.json',
+        data: {
+          'message': message,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+      _announcementsController.add(message);
+    } catch (_) {}
+  }
+
   // Generar un código único de caravana de 6 caracteres (ej: RODADA-9482)
   String generateCode() {
     final rand = Random().nextInt(8999) + 1000;

@@ -223,6 +223,58 @@ class _CaravanModalState extends State<CaravanModal> {
                       },
                     ),
                     const SizedBox(height: 14),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'ENVIAR AVISO RÁPIDO AL GRUPO',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(Icons.front_hand_rounded, size: 14, color: Colors.amber),
+                          label: const Text('🛑 Parada Técnica', style: TextStyle(color: Colors.white, fontSize: 12)),
+                          backgroundColor: const Color(0xFF334155),
+                          onPressed: () {
+                            widget.caravanService.sendAnnouncement('🛑 Parada Técnica solicitada por un compañero');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Aviso enviado a la caravana: 🛑 Parada Técnica')),
+                            );
+                          },
+                        ),
+                        ActionChip(
+                          avatar: const Icon(Icons.local_gas_station_rounded, size: 14, color: Colors.lightBlue),
+                          label: const Text('⛽ Necesito Tanquear', style: TextStyle(color: Colors.white, fontSize: 12)),
+                          backgroundColor: const Color(0xFF334155),
+                          onPressed: () {
+                            widget.caravanService.sendAnnouncement('⛽ Necesito tanquear en la próxima estación');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Aviso enviado a la caravana: ⛽ Necesito Tanquear')),
+                            );
+                          },
+                        ),
+                        ActionChip(
+                          avatar: const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange),
+                          label: const Text('⚠️ Reducir Velocidad', style: TextStyle(color: Colors.white, fontSize: 12)),
+                          backgroundColor: const Color(0xFF334155),
+                          onPressed: () {
+                            widget.caravanService.sendAnnouncement('⚠️ Precaución en la vía: Reducir velocidad');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Aviso enviado a la caravana: ⚠️ Precaución')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     ElevatedButton.icon(
                       onPressed: () async {
                         final s = ScaffoldMessenger.of(context);

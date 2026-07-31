@@ -12,7 +12,6 @@ import '../../../../core/services/tts_voice_service.dart';
 import '../../../navigation/providers/navigation_provider.dart';
 import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
 import '../../../navigation/presentation/widgets/driver_earnings_sheet.dart';
-import '../../../gamification/presentation/widgets/leaderboard_modal.dart';
 import '../widgets/speed_limit_badge.dart';
 import '../widgets/map_controls.dart';
 import '../widgets/search_bar_overlay.dart';
@@ -75,6 +74,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         setState(() {
           _caravanMembers = members;
         });
+      }
+    });
+    _caravanService.announcementsStream.listen((msg) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('📣 Aviso de Caravana: $msg'),
+            backgroundColor: const Color(0xFF8B5CF6),
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     });
   }
@@ -697,30 +707,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                             ],
                           ),
                           child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 22),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Botón Leaderboard / Ranking de Guardianes
-                      GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            backgroundColor: Colors.transparent,
-                            builder: (ctx) => LeaderboardModal(
-                              currentPulsePoints: navState.pulsePoints,
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B),
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x66F59E0B), blurRadius: 10, offset: Offset(0, 4)),
-                            ],
-                          ),
-                          child: const Icon(Icons.emoji_events_rounded, color: Colors.black, size: 22),
                         ),
                       ),
                       const SizedBox(width: 10),
