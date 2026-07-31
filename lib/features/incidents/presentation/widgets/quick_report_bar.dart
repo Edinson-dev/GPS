@@ -20,11 +20,11 @@ class QuickReportBar extends StatelessWidget {
     ];
 
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFF00C8FF).withValues(alpha: 0.5), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -34,53 +34,56 @@ class QuickReportBar extends StatelessWidget {
           )
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: quickItems.map((item) {
-          final type = item['type'] as IncidentType;
-          final label = item['label'] as String;
-          final icon = item['icon'] as IconData;
-          final color = item['color'] as Color;
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: quickItems.map((item) {
+            final type = item['type'] as IncidentType;
+            final label = item['label'] as String;
+            final icon = item['icon'] as IconData;
+            final color = item['color'] as Color;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: InkWell(
-              onTap: () {
-                onReport(type, '$label reportado en tiempo real');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('⚡ ¡Reporte de $label publicado en tiempo real! (+15 pts)'),
-                    backgroundColor: color,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: color.withValues(alpha: 0.6)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(icon, color: color, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: InkWell(
+                onTap: () {
+                  onReport(type, '$label reportado en tiempo real');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('⚡ ¡Reporte de $label publicado en tiempo real! (+15 pts)'),
+                      backgroundColor: color,
+                      duration: const Duration(seconds: 2),
                     ),
-                  ],
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: color.withValues(alpha: 0.6)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: color, size: 15),
+                      const SizedBox(width: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

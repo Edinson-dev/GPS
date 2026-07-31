@@ -522,10 +522,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Overlay Superior Izquierdo: Badge de Clima y Estado de Vía
+          // Overlay Superior Izquierdo: Badge de Clima y Estado de Vía (Ubicado debajo de la barra de búsqueda)
           if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
             Positioned(
-              top: topInset + 66,
+              top: topInset + 108,
               left: 12,
               child: const WeatherBadgeWidget(
                 condition: '⛅ Sol Parcial',
@@ -534,10 +534,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Overlay Izquierdo: Velocímetro (Se oculta al desplegar lista de búsqueda para no estorbar)
+          // Overlay Izquierdo: Velocímetro (Ubicado debajo del badge de clima sin solaparse)
           if (!_isSearchingDropdownOpen && navState.availableRoutes.isEmpty)
             Positioned(
-              top: topInset + 115,
+              top: topInset + 148,
               left: 12,
               child: SpeedLimitBadge(
                 currentSpeedKmh: currentSpeed,
@@ -545,10 +545,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Overlay Derecho: Controles del Mapa 2D/3D (Se oculta al buscar para no tapar los resultados)
+          // Overlay Derecho: Controles del Mapa 2D/3D (Alineado con el panel superior derecho)
           if (!_isSearchingDropdownOpen)
             Positioned(
-              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 115),
+              top: topInset + (navState.availableRoutes.isNotEmpty ? 70 : 108),
               right: 12,
               child: MapControlsWidget(
                 is3DMode: _is3DMode,
@@ -601,62 +601,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
 
-          // Overlay Inferior Central: Tira de Reportes Rápidos en 1-Tap y Controles de Caravana
+          // Overlay Inferior 1: Tira de Reportes Rápidos en 1-Tap (Flotante a 74px sin chocar con botones)
           if (navState.availableRoutes.isEmpty && !_isSearchingDropdownOpen)
             Positioned(
-              bottom: 20,
+              bottom: 74,
+              left: 12,
+              right: 12,
+              child: QuickReportBar(
+                onReport: (type, desc) {
+                  navNotifier.reportIncident(type, desc);
+                },
+              ),
+            ),
+
+          // Overlay Inferior 2: Fila Principal de Botones de Acción (Alerta, Caravana, Ganancias, Leaderboard, SOS)
+          if (navState.availableRoutes.isEmpty && !_isSearchingDropdownOpen)
+            Positioned(
+              bottom: 16,
               left: 0,
               right: 0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  QuickReportBar(
-                    onReport: (type, desc) {
-                      navNotifier.reportIncident(type, desc);
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFFF6B00)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF00E676),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '1786 Reportes cerca de ti',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IncidentFabButton(
+                  IncidentFabButton(
                         onPressed: () {
                           showModalBottomSheet(
                             context: context,
@@ -800,9 +767,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
           // Overlay Inferior Deslizable: Selector de Rutas Eco vs Rápidas (Compacto estilo Imagen 1)
           if (navState.availableRoutes.isNotEmpty)
