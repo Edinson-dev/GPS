@@ -13,27 +13,33 @@ class SpeedLimitBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSpeeding = currentSpeedKmh > speedLimitKmh;
+    final bool isNearLimit = !isSpeeding && (speedLimitKmh - currentSpeedKmh <= 5) && currentSpeedKmh > 0;
+
+    final Color badgeColor = isSpeeding
+        ? const Color(0xFFFF2E55)
+        : isNearLimit
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFF10B981);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Velocímetro Actual
+        // Velocímetro Actual Estilo Cockpit Deportivo
         Container(
-          width: 72,
-          height: 72,
+          width: 76,
+          height: 76,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isSpeeding ? const Color(0xFFFF2E55) : const Color(0xFF1E293B),
+            color: const Color(0xFF0F172A),
             border: Border.all(
-              color: isSpeeding ? Colors.white : const Color(0xFF00C8FF),
-              width: 3,
+              color: badgeColor,
+              width: 3.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isSpeeding ? const Color(0xFFFF2E55) : const Color(0xFF00C8FF))
-                    .withOpacity(0.4),
-                blurRadius: 12,
-                spreadRadius: 2,
+                color: badgeColor.withValues(alpha: 0.5),
+                blurRadius: 16,
+                spreadRadius: 3,
               )
             ],
           ),
@@ -42,39 +48,47 @@ class SpeedLimitBadge extends StatelessWidget {
             children: [
               Text(
                 currentSpeedKmh.round().toString(),
-                style: const TextStyle(
-                  fontSize: 24,
+                style: TextStyle(
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: badgeColor,
+                  letterSpacing: -0.5,
                 ),
               ),
               const Text(
                 'km/h',
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white70,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 6),
-        // Límite de Velocidad (Señal Circular)
+        const SizedBox(height: 8),
+        // Límite de Velocidad (Señal Oficial Colombiana)
         Container(
-          width: 42,
-          height: 42,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
-            border: Border.all(color: Colors.red, width: 3),
+            border: Border.all(color: const Color(0xFFDC2626), width: 3.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black45,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              )
+            ],
           ),
           child: Center(
             child: Text(
               speedLimitKmh.round().toString(),
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
                 color: Colors.black,
               ),
             ),

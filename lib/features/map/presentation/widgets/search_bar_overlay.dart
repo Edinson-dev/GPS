@@ -97,20 +97,25 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
           ),
         ),
 
-        // Barra Principal de Búsqueda
+        // Barra Principal de Búsqueda Estilo Glassmorphism Cristal Neón
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.88),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.35),
+                color: const Color(0xFF00C8FF).withValues(alpha: 0.25),
+                blurRadius: 18,
+                spreadRadius: 1,
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               )
             ],
-            border: Border.all(color: const Color(0xFF334155)),
+            border: Border.all(color: const Color(0xFF00C8FF).withValues(alpha: 0.6), width: 1.5),
           ),
           child: Row(
             children: [
@@ -158,7 +163,7 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withOpacity(0.2),
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFFFF6B00)),
                 ),

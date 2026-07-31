@@ -144,6 +144,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final currentHeading = (navState.currentLocation?.heading ?? 0.0) * (3.141592653589793 / 180.0);
 
     final topInset = MediaQuery.of(context).padding.top + 10;
+    final cameraBounds = _hasCenteredInitialPos ? _mapController.camera.visibleBounds : null;
+    final isVisibleOnScreen = (LatLng p) => cameraBounds == null || cameraBounds.contains(p);
 
     // Extraer puntos de alerta de tráfico pesado o accidentes para dibujar línea roja
     final List<Polyline> trafficLines = [];
@@ -233,11 +235,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               width: 50,
                               height: 50,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00C8FF).withOpacity(0.3),
+                                color: const Color(0xFF00C8FF).withValues(alpha: 0.3),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF00C8FF).withOpacity(0.6),
+                                    color: const Color(0xFF00C8FF).withValues(alpha: 0.6),
                                     blurRadius: 18,
                                     spreadRadius: 4,
                                   ),
@@ -248,12 +250,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               width: 38,
                               height: 38,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF00C8FF),
+                                color: Color(0xFF0F172A),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.navigation,
-                                color: Colors.white,
+                                Icons.navigation_rounded,
+                                color: Color(0xFF00C8FF),
                                 size: 24,
                               ),
                             ),
@@ -261,85 +263,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcador de Destino Seleccionado
-                    if (navState.destination != null)
-                      Marker(
-                        point: navState.destination!,
-                        width: 48,
-                        height: 48,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFF2E55),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0xFFFF2E55),
-                                blurRadius: 12,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.flag_rounded,
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
-                      ),
-                    // Marcadores de Incidentes en Vía con Verificación Comunitaria en Tiempo Real
-                    ...navState.activeIncidents.map(
+                    // Marcadores de Incidentes en Tiempo Real (Filtrado Espacial 60 FPS)
+                    ...navState.activeIncidents.where((inc) => isVisibleOnScreen(inc.position)).map(
                       (inc) => Marker(
                         point: inc.position,
-                        width: 42,
-                        height: 42,
+                        width: 44,
+                        height: 44,
                         child: GestureDetector(
                           onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                backgroundColor: const Color(0xFF1E293B),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                title: Row(
-                                  children: [
-                                    Icon(inc.icon, color: inc.color, size: 28),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        inc.title,
-                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                content: Text(
-                                  '¿Este reporte sigue activo en tiempo real en la vía?\n(${inc.description.isNotEmpty ? inc.description : "Reportado por la comunidad"})',
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                                ),
-                                actions: [
-                                  TextButton.icon(
-                                    icon: const Icon(Icons.thumb_down_rounded, color: Color(0xFFFF2E55), size: 18),
-                                    label: const Text('Ya no está', style: TextStyle(color: Color(0xFFFF2E55))),
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      navNotifier.voteIncident(inc.id, false);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Gracias por desmentir en tiempo real. Reporte retirado.')),
-                                      );
-                                    },
-                                  ),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00C8FF)),
-                                    icon: const Icon(Icons.thumb_up_rounded, color: Colors.black, size: 18),
-                                    label: const Text('Confirmar (+5 pts)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      navNotifier.voteIncident(inc.id, true);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('¡Confirmado! Ganaste +5 PulsePoints comunitarios.')),
-                                      );
-                                    },
-                                  ),
-                                ],
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('⚠️ ${inc.title}: ${inc.description}'),
+                                backgroundColor: inc.color,
                               ),
                             );
                           },
@@ -364,8 +299,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcadores de Peajes en Colombia (Tarifas COP)
-                    ...ColombiaTollsDatabase.tolls.map(
+                    // Marcadores de Peajes en Colombia (Filtrado Espacial 60 FPS)
+                    ...ColombiaTollsDatabase.tolls.where((toll) => isVisibleOnScreen(toll.position)).map(
                       (toll) => Marker(
                         point: toll.position,
                         width: 38,
@@ -389,8 +324,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcadores de Cámaras de Fotomultas en Medellín & Colombia (Cargadas vía API en Vivo)
-                    ..._liveSpeedCameras.map(
+                    // Marcadores de Cámaras de Fotomultas en Medellín & Colombia (Filtrado Espacial 60 FPS)
+                    ..._liveSpeedCameras.where((cam) => isVisibleOnScreen(cam.position)).map(
                       (cam) => Marker(
                         point: cam.position,
                         width: 36,
@@ -414,8 +349,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcadores de Miembros de Caravana en Vivo 👥
-                    ..._caravanMembers.where((m) => m.id != _caravanService.currentMemberId).map(
+                    // Marcadores de Miembros de Caravana en Vivo 👥 (Filtrado Espacial 60 FPS)
+                    ..._caravanMembers
+                        .where((m) => m.id != _caravanService.currentMemberId && isVisibleOnScreen(m.position))
+                        .map(
                       (member) => Marker(
                         point: member.position,
                         width: 52,
@@ -470,8 +407,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
-                    // Marcadores de Gasolineras (Terpel/Texaco) y Cargadores Eléctricos EPM
-                    ...ColombiaGasStationsDatabase.stations.map(
+                    // Marcadores de Gasolineras (Terpel/Texaco) y Cargadores Eléctricos EPM (Filtrado Espacial 60 FPS)
+                    ...ColombiaGasStationsDatabase.stations.where((st) => isVisibleOnScreen(st.position)).map(
                       (st) => Marker(
                         point: st.position,
                         width: 34,
@@ -483,18 +420,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 content: Text(st.isElectricCharging
                                     ? '⚡ ${st.name} - ${st.address}'
                                     : '⛽ ${st.name} (${st.brand}) - ${st.address}'),
-                                backgroundColor: const Color(0xFF10B981),
+                                backgroundColor: st.isElectricCharging
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFF2563EB),
                               ),
                             );
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: st.isElectricCharging ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
+                              color: st.isElectricCharging
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF2563EB),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               st.isElectricCharging ? Icons.ev_station_rounded : Icons.local_gas_station_rounded,
-                              color: Colors.black,
+                              color: Colors.white,
                               size: 18,
                             ),
                           ),
