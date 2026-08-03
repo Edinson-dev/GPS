@@ -9,7 +9,6 @@ import '../../../../core/constants/colombia_tolls_database.dart';
 import '../../../../core/constants/speed_camera_database.dart';
 import '../../../../core/constants/colombia_gas_stations_database.dart';
 import '../../../../core/services/speed_camera_api_service.dart';
-import '../../../../core/services/tts_voice_service.dart';
 import '../../../navigation/providers/navigation_provider.dart';
 import '../../../navigation/presentation/screens/navigation_mode_screen.dart';
 import '../../../navigation/presentation/widgets/driver_earnings_sheet.dart';
