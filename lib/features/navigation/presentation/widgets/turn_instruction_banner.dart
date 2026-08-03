@@ -23,16 +23,17 @@ class TurnInstructionBanner extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E40AF),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.90),
             borderRadius: BorderRadius.vertical(
               top: const Radius.circular(24),
               bottom: nextStep != null ? Radius.zero : const Radius.circular(24),
             ),
+            border: Border.all(color: const Color(0xFF00C8FF).withValues(alpha: 0.5), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
+                color: const Color(0xFF00C8FF).withValues(alpha: 0.25),
                 blurRadius: 16,
-                offset: const Offset(0, 6),
+                spreadRadius: 1,
               )
             ],
           ),

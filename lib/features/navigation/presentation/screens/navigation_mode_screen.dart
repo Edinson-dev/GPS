@@ -15,6 +15,7 @@ import '../widgets/trip_summary_dialog.dart';
 
 import 'dart:async';
 import '../../../../core/services/tts_voice_service.dart';
+import '../widgets/route_progress_bar_widget.dart';
 
 class NavigationModeScreen extends ConsumerStatefulWidget {
   const NavigationModeScreen({super.key});
@@ -169,11 +170,11 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0070F3).withValues(alpha: 0.25),
+                                color: (currentSpeed > navState.currentSpeedLimit ? const Color(0xFFFF2E55) : const Color(0xFF00C8FF)).withValues(alpha: 0.25),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF0070F3).withValues(alpha: 0.6),
+                                    color: (currentSpeed > navState.currentSpeedLimit ? const Color(0xFFFF2E55) : const Color(0xFF00C8FF)).withValues(alpha: 0.7),
                                     blurRadius: 24,
                                     spreadRadius: 6,
                                   ),
@@ -182,7 +183,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                             ),
                             const Icon(
                               Icons.navigation_rounded,
-                              color: Color(0xFF0070F3),
+                              color: Color(0xFF00C8FF),
                               size: 44,
                             ),
                             const Icon(
@@ -225,7 +226,17 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
             ),
           ),
 
-
+          // Lado Derecho: Barra Vertical de Progreso de Ruta (Estímulo Tráfico y Retenes)
+          if (route != null)
+            Positioned(
+              top: topInset + 160,
+              right: 16,
+              child: RouteProgressBarWidget(
+                route: route,
+                currentStepIndex: navState.currentStepIndex,
+                currentSpeedKmh: currentSpeed,
+              ),
+            ),
 
           // Banner Superior TomTom: Maniobra Actual y Sub-Banner "Luego en..."
           Positioned(
