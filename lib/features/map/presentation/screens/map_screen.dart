@@ -25,6 +25,8 @@ import '../../../incidents/presentation/widgets/sos_emergency_modal.dart';
 import '../widgets/weather_badge_widget.dart';
 import '../widgets/map_style_selector_sheet.dart';
 import '../../../incidents/presentation/widgets/quick_report_bar.dart';
+import '../../../incidents/models/medellin_closure_model.dart';
+import '../../../incidents/providers/medellin_closures_provider.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -143,6 +145,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final navState = ref.watch(navigationProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 
+    final isMedellinClosuresVisible = ref.watch(medellinClosuresVisibilityProvider);
+    final medellinClosuresAsync = ref.watch(medellinClosuresProvider);
+    final medellinClosures = isMedellinClosuresVisible
+        ? (medellinClosuresAsync.valueOrNull ?? [])
+        : <MedellinClosure>[];
+
     // Escuchar cambios en la ruta o ubicación para auto-centrar o encuadrar vista previa de ruta
     ref.listen(navigationProvider, (previous, next) {
       if (next.currentLocation != null) {
@@ -181,28 +189,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final cameraBounds = _hasCenteredInitialPos ? _mapController.camera.visibleBounds : null;
     final isVisibleOnScreen = (LatLng p) => cameraBounds == null || cameraBounds.contains(p);
 
-    // Extraer puntos de alerta de tráfico pesado o accidentes para dibujar línea roja
+    // Extraer puntos de alerta de tráfico pesado o accidentes para dibujar línea roja (Optimizado O(1) BBox)
     final List<Polyline> trafficLines = [];
     if (navState.selectedRoute != null) {
       final trafficIncidents = navState.activeIncidents.where(
         (inc) => inc.type == IncidentType.trafficJam || inc.type == IncidentType.crash,
       );
-      for (final inc in trafficIncidents) {
-        // Encontrar segmento de la ruta cercano al incidente
+      if (trafficIncidents.isNotEmpty) {
         final routePts = navState.selectedRoute!.polylinePoints;
-        for (int i = 0; i < routePts.length - 1; i++) {
-          final dist = const Distance().as(LengthUnit.Meter, inc.position, routePts[i]);
-          if (dist < 150) {
-            final startIdx = (i - 4).clamp(0, routePts.length - 1);
-            final endIdx = (i + 4).clamp(0, routePts.length - 1);
-            trafficLines.add(
-              Polyline(
-                points: routePts.sublist(startIdx, endIdx + 1),
-                color: const Color(0xFFFF2E55),
-                strokeWidth: 9.0,
-              ),
-            );
-            break;
+        for (final inc in trafficIncidents) {
+          final incLat = inc.position.latitude;
+          final incLng = inc.position.longitude;
+          for (int i = 0; i < routePts.length - 1; i += 2) {
+            final pt = routePts[i];
+            // Pre-filtro delta lat/lng ultra-rápido para evitar trigonometría pesada
+            if ((incLat - pt.latitude).abs() < 0.002 && (incLng - pt.longitude).abs() < 0.002) {
+              final dist = const Distance().as(LengthUnit.Meter, inc.position, pt);
+              if (dist < 150) {
+                final startIdx = (i - 4).clamp(0, routePts.length - 1);
+                final endIdx = (i + 4).clamp(0, routePts.length - 1);
+                trafficLines.add(
+                  Polyline(
+                    points: routePts.sublist(startIdx, endIdx + 1),
+                    color: const Color(0xFFFF2E55),
+                    strokeWidth: 9.0,
+                  ),
+                );
+                break;
+              }
+            }
           }
         }
       }
@@ -235,10 +250,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
                   maxNativeZoom: 18,
-                  keepBuffer: 12,
-                  panBuffer: 4,
+                  keepBuffer: 2,
+                  panBuffer: 1,
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
+                if (isMedellinClosuresVisible && medellinClosures.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      for (final closure in medellinClosures)
+                        for (final line in closure.polylines)
+                          Polyline(
+                            points: line,
+                            color: closure.color,
+                            strokeWidth: closure.category == MedellinClosureCategory.detour ? 4.5 : 6.5,
+                          ),
+                    ],
+                  ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(
                     polylines: [
@@ -297,6 +324,60 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                       ),
                     ),
+                    // Marcadores de Cierres de Movilidad de Medellín (Alcaldía) 🚧
+                    ...medellinClosures.where((c) {
+                      final pos = c.point ?? (c.polylines.isNotEmpty && c.polylines.first.isNotEmpty ? c.polylines.first.first : null);
+                      return pos != null && isVisibleOnScreen(pos);
+                    }).map((closure) {
+                      final pos = closure.point ?? closure.polylines.first.first;
+                      return Marker(
+                        point: pos,
+                        width: 40,
+                        height: 40,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '🏛️ Alcaldía de Medellín - ${closure.categoryLabel}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amberAccent),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text('📍 ${closure.title}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text('ℹ️ ${closure.description}', style: const TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                                backgroundColor: const Color(0xFF1E293B),
+                                duration: const Duration(seconds: 5),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: closure.color,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: closure.color.withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              closure.icon,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                     // Marcadores de Incidentes en Tiempo Real (Filtrado Espacial 60 FPS)
                     ...navState.activeIncidents.where((inc) => isVisibleOnScreen(inc.position)).map(
                       (inc) => Marker(

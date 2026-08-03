@@ -133,8 +133,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
                   maxNativeZoom: 18,
-                  keepBuffer: 12,
-                  panBuffer: 4,
+                  keepBuffer: 2,
+                  panBuffer: 1,
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
                 if (route != null)
