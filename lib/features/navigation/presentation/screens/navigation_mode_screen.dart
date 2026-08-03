@@ -13,6 +13,9 @@ import '../../../incidents/presentation/widgets/report_incident_modal.dart';
 import '../widgets/lane_guidance_widget.dart';
 import '../widgets/trip_summary_dialog.dart';
 
+import 'dart:async';
+import '../../../../core/services/tts_voice_service.dart';
+
 class NavigationModeScreen extends ConsumerStatefulWidget {
   const NavigationModeScreen({super.key});
 
@@ -23,6 +26,9 @@ class NavigationModeScreen extends ConsumerStatefulWidget {
 class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
   late final MapController _mapController;
   bool _isFollowingGps = true;
+  Timer? _autoRecenterTimer;
+  final TtsVoiceService _ttsService = TtsVoiceService();
+  int _lastSpokenStepIndex = -1;
 
   @override
   void initState() {
@@ -30,7 +36,31 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     _mapController = MapController();
   }
 
+  @override
+  void dispose() {
+    _autoRecenterTimer?.cancel();
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  void _onUserGesture() {
+    if (_isFollowingGps) {
+      setState(() {
+        _isFollowingGps = false;
+      });
+    }
+    _autoRecenterTimer?.cancel();
+    _autoRecenterTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _isFollowingGps = true;
+        });
+      }
+    });
+  }
+
   void _recenterGps(LatLng currentPos, double heading) {
+    _autoRecenterTimer?.cancel();
     setState(() {
       _isFollowingGps = true;
     });
@@ -52,6 +82,12 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
         ? route.steps[currentStepIndex + 1]
         : null;
 
+    // Dictado por Voz Inteligente TTS de Instrucción de Giro
+    if (currentStepIndex != _lastSpokenStepIndex && currentStep != null) {
+      _lastSpokenStepIndex = currentStepIndex;
+      _ttsService.speakInstruction('En ${currentStep.distanceMeters.toInt()} metros, ${currentStep.instruction}');
+    }
+
     final currentSpeed = navState.currentLocation?.speedKmh ?? 0.0;
     final currentPos = navState.currentLocation?.position ??
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
@@ -63,11 +99,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     // Escuchar movimiento continuo del GPS para actualizar cámara en orientación Heading-Up (TomTom 3D)
     ref.listen(navigationProvider, (previous, next) {
       if (_isFollowingGps && next.currentLocation != null) {
-        if (previous?.currentLocation?.position != next.currentLocation?.position ||
-            previous?.currentLocation?.heading != next.currentLocation?.heading) {
-          _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
-          _mapController.rotate(- (next.currentLocation!.heading));
-        }
+        _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+        _mapController.rotate(-(next.currentLocation!.heading));
       }
     });
 
@@ -85,10 +118,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                 minZoom: 3.0,
                 initialRotation: -rawHeading,
                 onPositionChanged: (position, hasGesture) {
-                  if (hasGesture && _isFollowingGps) {
-                    setState(() {
-                      _isFollowingGps = false;
-                    });
+                  if (hasGesture) {
+                    _onUserGesture();
                   }
                 },
               ),
@@ -96,11 +127,14 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                 TileLayer(
                   urlTemplate:
                       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                  fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
                   maxNativeZoom: 18,
-                  keepBuffer: 6,
+                  keepBuffer: 12,
+                  panBuffer: 4,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
                 if (route != null)
                   PolylineLayer(

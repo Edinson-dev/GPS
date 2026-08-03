@@ -17,6 +17,7 @@ class MapStyleSelectorSheet extends StatelessWidget {
       {'name': 'Cyberpunk Noche', 'icon': Icons.nightlight_round, 'desc': 'Fondo oscuro neón', 'color': const Color(0xFF8B5CF6)},
       {'name': 'Satélite HD', 'icon': Icons.satellite_alt_rounded, 'desc': 'Fotografía aérea real', 'color': const Color(0xFF10B981)},
       {'name': 'Tráfico 3D', 'icon': Icons.traffic_rounded, 'desc': 'Flujo vehicular en vivo', 'color': const Color(0xFFFF2E55)},
+      {'name': 'OLED Ahorro Batería', 'icon': Icons.battery_saver_rounded, 'desc': 'Negro puro para ruta larga', 'color': const Color(0xFF10B981)},
     ];
 
     return Container(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -53,6 +54,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
   ];
 
   String get _currentTileStyle {
@@ -98,8 +100,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
+  Timer? _autoRecenterTimer;
+
+  void _onUserGesture() {
+    if (_isFollowingGps) {
+      setState(() {
+        _isFollowingGps = false;
+      });
+    }
+    _autoRecenterTimer?.cancel();
+    _autoRecenterTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _isFollowingGps = true;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _autoRecenterTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -201,23 +222,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 maxZoom: 18.5,
                 minZoom: 3.0,
                 onPositionChanged: (position, hasGesture) {
-                  if (hasGesture && _isFollowingGps) {
-                    setState(() {
-                      _isFollowingGps = false;
-                    });
+                  if (hasGesture) {
+                    _onUserGesture();
                   }
                 },
               ),
               children: [
                 TileLayer(
-                  key: const ValueKey('waze_permanent_tile_layer'),
+                  key: ValueKey('waze_permanent_tile_layer_$_styleIndex'),
                   urlTemplate: _currentTileStyle,
+                  fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
-                  tileProvider: NetworkTileProvider(),
+                  tileProvider: CancellableNetworkTileProvider(),
                   maxZoom: 19,
                   maxNativeZoom: 18,
-                  keepBuffer: 8,
-                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 150)),
+                  keepBuffer: 12,
+                  panBuffer: 4,
+                  tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
                 if (navState.selectedRoute != null) ...[
                   PolylineLayer(
