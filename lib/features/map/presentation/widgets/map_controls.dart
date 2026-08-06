@@ -23,78 +23,80 @@ class MapControlsWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildCircularButton(
+        _buildButton(
           icon: is3DMode ? Icons.view_in_ar_rounded : Icons.map_rounded,
           label: is3DMode ? '3D' : '2D',
           onPressed: onToggle3D,
-          isActive: is3DMode,
+          accentColor: is3DMode ? const Color(0xFF1B4FD8) : null,
         ),
         const SizedBox(height: 10),
         if (onToggleTraffic != null) ...[
-          _buildCircularButton(
+          _buildButton(
             icon: Icons.traffic_rounded,
             onPressed: onToggleTraffic!,
-            isActive: isTrafficActive,
-            color: isTrafficActive ? const Color(0xFFFF6B00) : const Color(0xFF1E293B),
+            accentColor: isTrafficActive ? const Color(0xFFFF6B00) : null,
           ),
           const SizedBox(height: 10),
         ],
-        _buildCircularButton(
+        _buildButton(
           icon: Icons.layers_rounded,
           onPressed: onToggleLayers,
         ),
         const SizedBox(height: 10),
-        _buildCircularButton(
+        // Botón de recentrar — naranja Waze cuando activo
+        _buildButton(
           icon: Icons.my_location_rounded,
-          color: const Color(0xFF00C8FF),
-          iconColor: Colors.white,
           onPressed: onRecenter,
+          accentColor: const Color(0xFF1B4FD8),
+          iconColor: Colors.white,
         ),
       ],
     );
   }
 
-  Widget _buildCircularButton({
+  Widget _buildButton({
     required IconData icon,
     String? label,
     required VoidCallback onPressed,
-    Color? color,
+    Color? accentColor,
     Color? iconColor,
-    bool isActive = false,
   }) {
+    final bool hasAccent = accentColor != null;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(30),
         child: Container(
-          width: 50,
-          height: 50,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color ?? (isActive ? const Color(0xFF00C8FF) : const Color(0xFF1E293B)),
+            color: hasAccent ? accentColor : Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              )
+                color: hasAccent
+                    ? accentColor.withValues(alpha: 0.35)
+                    : Colors.black.withValues(alpha: 0.18),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
           child: Center(
             child: label != null
                 ? Text(
                     label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.white,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      color: iconColor ?? Colors.white,
                     ),
                   )
                 : Icon(
                     icon,
-                    color: iconColor ?? Colors.white,
-                    size: 24,
+                    color: iconColor ?? (hasAccent ? Colors.white : const Color(0xFF333355)),
+                    size: 22,
                   ),
           ),
         ),

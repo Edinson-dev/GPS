@@ -35,7 +35,8 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
 
     setState(() => _isLoading = true);
     final userPos = ref.read(navigationProvider).currentLocation?.position;
-    final results = await _geocodingService.searchPlaces(query, proximity: userPos);
+    final results =
+        await _geocodingService.searchPlaces(query, proximity: userPos);
     setState(() {
       _searchResults = results;
       _isLoading = false;
@@ -51,10 +52,9 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Selector de Transportes (Auto, Moto, Bici, Caminando, Bus)
-        Container(
-          height: 40,
-          margin: const EdgeInsets.only(bottom: 8),
+        // Chips de modo de transporte — estilo Waze claro
+        SizedBox(
+          height: 38,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -96,30 +96,29 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
 
-        // Barra Principal de Búsqueda Estilo Glassmorphism Cristal Neón
+        // Barra de búsqueda — blanca estilo Waze / Google Maps
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(30),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00C8FF).withValues(alpha: 0.25),
-                blurRadius: 18,
-                spreadRadius: 1,
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 12,
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 14,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
-            border: Border.all(color: const Color(0xFF00C8FF).withValues(alpha: 0.6), width: 1.5),
           ),
           child: Row(
             children: [
-              const Icon(Icons.search_rounded, color: Color(0xFF00C8FF), size: 26),
+              const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF999EB5),
+                size: 24,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
@@ -136,11 +135,20 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                       widget.onSearchingStateChanged?.call(false);
                     }
                   },
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(
+                    color: Color(0xFF1A1A2E),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                   decoration: const InputDecoration(
-                    hintText: '¿A dónde quieres ir? (Dirección exacta)',
-                    hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                    hintText: '¿A dónde quieres ir?',
+                    hintStyle: TextStyle(
+                      color: Color(0xFFAAAFC0),
+                      fontSize: 14,
+                    ),
                     border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
                   ),
                 ),
               ),
@@ -148,35 +156,59 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
                 const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00C8FF)),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF1B4FD8),
+                  ),
                 )
               else if (_controller.text.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     _controller.clear();
                     setState(() => _searchResults = []);
                     widget.onSearchingStateChanged?.call(false);
                   },
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFDDDDE8),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF666680),
+                      size: 14,
+                    ),
+                  ),
                 ),
-              // Insignia de PulsePoints Gamificada
+              const SizedBox(width: 8),
+              // Badge de PulsePoints — naranja Waze
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFF6B00)),
+                  color: const Color(0xFFFFF4E8),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFFFF9500).withValues(alpha: 0.7),
+                  ),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.bolt_rounded, color: Color(0xFFFF6B00), size: 14),
+                    const Icon(
+                      Icons.bolt_rounded,
+                      color: Color(0xFFFF9500),
+                      size: 13,
+                    ),
                     const SizedBox(width: 2),
                     Text(
-                      '${widget.pulsePoints} pts',
+                      '${widget.pulsePoints}',
                       style: const TextStyle(
-                        color: Color(0xFFFF6B00),
+                        color: Color(0xFFCC7700),
                         fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -186,40 +218,60 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
           ),
         ),
 
-        // Lista Desplegable de Resultados con Direcciones Exactas (sin CP)
+        // Dropdown de resultados — blanco
         if (_searchResults.isNotEmpty)
           Container(
-            margin: const EdgeInsets.only(top: 8),
+            margin: const EdgeInsets.only(top: 6),
             constraints: const BoxConstraints(maxHeight: 240),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF334155)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Material(
               color: Colors.transparent,
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _searchResults.length,
-                separatorBuilder: (_, __) => const Divider(color: Color(0xFF334155), height: 1),
+                separatorBuilder: (_, __) => const Divider(
+                  color: Color(0xFFEEEEF5),
+                  height: 1,
+                ),
                 itemBuilder: (context, index) {
                   final item = _searchResults[index];
                   return ListTile(
                     dense: true,
                     leading: const CircleAvatar(
                       radius: 16,
-                      backgroundColor: Color(0xFF00C8FF),
-                      child: Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
+                      backgroundColor: Color(0xFFF0F0F8),
+                      child: Icon(
+                        Icons.location_on_rounded,
+                        color: Color(0xFF1B4FD8),
+                        size: 18,
+                      ),
                     ),
                     title: Text(
                       item.title,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        color: Color(0xFF1A1A2E),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     subtitle: Text(
                       item.address,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                      style: const TextStyle(
+                        color: Color(0xFF999EB5),
+                        fontSize: 12,
+                      ),
                     ),
                     onTap: () {
                       FocusScope.of(context).unfocus();
@@ -248,39 +300,37 @@ class _SearchBarOverlayState extends ConsumerState<SearchBarOverlay> {
     return GestureDetector(
       onTap: () => onSelect(mode),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF00C8FF) : const Color(0xFF1E293B),
+          color: isSelected ? const Color(0xFF1B4FD8) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF00C8FF) : const Color(0xFF334155),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF00C8FF).withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFF1B4FD8).withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.10),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 16,
-              color: isSelected ? Colors.black : Colors.white70,
+              size: 15,
+              color: isSelected ? Colors.white : const Color(0xFF666680),
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : const Color(0xFF444466),
+                fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12,
               ),
             ),

@@ -205,7 +205,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
 
     final topInset = MediaQuery.of(context).padding.top + 10;
     final cameraBounds = _hasCenteredInitialPos ? _mapController.camera.visibleBounds : null;
-    final isVisibleOnScreen = (LatLng p) => cameraBounds == null || cameraBounds.contains(p);
+    bool isVisibleOnScreen(LatLng p) => cameraBounds == null || cameraBounds.contains(p);
 
     // Extraer puntos de alerta de tráfico pesado o accidentes para dibujar línea roja (Optimizado O(1) BBox)
     final List<Polyline> trafficLines = [];
@@ -291,23 +291,23 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                       final pulseVal = _pulseAnimation.value;
                       return PolylineLayer(
                         polylines: [
-                          // Capa 1: Resplandor Neón Exterior (Glow) Waze
+                          // Capa 1: Sombra azul exterior Waze (glow suave)
                           Polyline(
                             points: navState.selectedRoute!.polylinePoints,
-                            color: const Color(0xFF00C8FF).withValues(alpha: 0.15 + (pulseVal * 0.35)),
-                            strokeWidth: 16.0 + (pulseVal * 4.0),
+                            color: const Color(0xFF1B4FD8).withValues(alpha: 0.18 + (pulseVal * 0.18)),
+                            strokeWidth: 18.0 + (pulseVal * 3.0),
                           ),
-                          // Capa 2: Línea Principal Waze Neón Cian
+                          // Capa 2: Borde blanco para contraste con el mapa
                           Polyline(
                             points: navState.selectedRoute!.polylinePoints,
-                            color: const Color(0xFF00C8FF),
+                            color: Colors.white,
+                            strokeWidth: 11.0,
+                          ),
+                          // Capa 3: Línea principal azul Waze
+                          Polyline(
+                            points: navState.selectedRoute!.polylinePoints,
+                            color: const Color(0xFF1B9CF4),
                             strokeWidth: 8.0,
-                          ),
-                          // Capa 3: Pulso Interno Fluyente Verde Esmeralda
-                          Polyline(
-                            points: navState.selectedRoute!.polylinePoints,
-                            color: const Color(0xFF00E676).withValues(alpha: 0.5 + (pulseVal * 0.5)),
-                            strokeWidth: 3.5,
                           ),
                           // Trazado de segmento rojo para tráfico pesado / accidentes
                           ...trafficLines,
@@ -318,43 +318,37 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                 ],
                 MarkerLayer(
                   markers: [
-                    // Marcador GPS estilo Flecha Waze Neón con Rotación Real por Brújula
+                    // Marcador GPS estilo Chevron Naranja Waze con Rotación por Brújula
                     Marker(
                       point: currentPos,
-                      width: 54,
-                      height: 54,
+                      width: 60,
+                      height: 60,
                       child: Transform.rotate(
                         angle: currentHeading,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
+                            // Sombra circular difusa
                             Container(
-                              width: 50,
-                              height: 50,
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00C8FF).withValues(alpha: 0.3),
+                                color: const Color(0xFFFF6B00).withValues(alpha: 0.22),
                                 shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00C8FF).withValues(alpha: 0.6),
-                                    blurRadius: 18,
-                                    spreadRadius: 4,
-                                  ),
-                                ],
                               ),
                             ),
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF0F172A),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.navigation_rounded,
-                                color: Color(0xFF00C8FF),
-                                size: 24,
-                              ),
+                            // Chevron naranja sólido Waze
+                            const Icon(
+                              Icons.navigation_rounded,
+                              color: Color(0xFFFF6B00),
+                              size: 42,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x88FF6B00),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -426,25 +420,27 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                               SnackBar(
                                 content: Text('⚠️ ${inc.title}: ${inc.description}'),
                                 backgroundColor: inc.color,
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: inc.color,
+                              color: Colors.white,
                               shape: BoxShape.circle,
+                              border: Border.all(color: inc.color, width: 2.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: inc.color.withValues(alpha: 0.5),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
+                                  color: Colors.black.withValues(alpha: 0.18),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Icon(
                               inc.icon,
-                              color: Colors.white,
-                              size: 22,
+                              color: inc.color,
+                              size: 20,
                             ),
                           ),
                         ),
@@ -461,16 +457,25 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('🛣️ ${toll.name} (${toll.locationName}) - Tarifa: \$${toll.priceCop} COP'),
-                                backgroundColor: const Color(0xFF1E293B),
+                                backgroundColor: const Color(0xFFF59E0B),
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                           child: Container(
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF59E0B),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFF59E0B), width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.toll_rounded, color: Colors.black, size: 22),
+                            child: const Icon(Icons.toll_rounded, color: Color(0xFFF59E0B), size: 20),
                           ),
                         ),
                       ),
@@ -486,16 +491,25 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('📷 Cámara Fotomulta (${cam.locationName}) - Máx ${cam.maxSpeedKmh} km/h'),
-                                backgroundColor: const Color(0xFFFF2E55),
+                                backgroundColor: const Color(0xFFFF3B30),
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                           child: Container(
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFF2E55),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFFF3B30), width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                            child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFFF3B30), size: 18),
                           ),
                         ),
                       ),
@@ -599,7 +613,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
             ),
           ),
 
-          // Overlay Superior: Barra de Búsqueda O Encabezado de Vista Previa estilo Waze/Google Maps (Imagen 1)
+          // Overlay Superior: Barra de Búsqueda O Encabezado de Vista Previa estilo Waze (blanco)
           if (navState.availableRoutes.isNotEmpty)
             Positioned(
               top: topInset,
@@ -608,21 +622,20 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black38,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
                     ),
                   ],
-                  border: Border.all(color: const Color(0xFF334155)),
                 ),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A2E)),
                       onPressed: () => navNotifier.stopNavigation(),
                     ),
                     const SizedBox(width: 4),
@@ -633,14 +646,14 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                         children: [
                           const Text(
                             'Tu ubicación',
-                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                            style: TextStyle(color: Color(0xFF999EB5), fontSize: 12),
                           ),
                           Text(
                             '➔ ${navState.destinationName}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF1A1A2E),
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                             ),
@@ -800,15 +813,19 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6),
+                            color: Colors.white,
                             shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x668B5CF6), blurRadius: 10, offset: Offset(0, 4)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
                             ],
                           ),
                           child: Icon(
                             _caravanService.currentGroupCode != null ? Icons.groups_rounded : Icons.group_add_rounded,
-                            color: Colors.white,
+                            color: const Color(0xFF8B5CF6),
                             size: 22,
                           ),
                         ),
@@ -837,13 +854,17 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981),
+                            color: Colors.white,
                             shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x6610B981), blurRadius: 10, offset: Offset(0, 4)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
                             ],
                           ),
-                          child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 22),
+                          child: const Icon(Icons.attach_money_rounded, color: Color(0xFF10B981), size: 22),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -859,15 +880,13 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF2E55), Color(0xFF990011)],
-                            ),
+                            color: const Color(0xFFFF3B30),
                             borderRadius: BorderRadius.circular(30),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Color(0x66FF2E55),
+                                color: const Color(0xFFFF3B30).withValues(alpha: 0.4),
                                 blurRadius: 12,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),

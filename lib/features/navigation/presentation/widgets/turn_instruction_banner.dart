@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/services/mapbox_directions_service.dart';
 import '../../../../core/utils/distance_formatter.dart';
@@ -17,130 +16,110 @@ class TurnInstructionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (currentStep == null) return const SizedBox.shrink();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Banner Principal Cyberpunk HUD Glassmorphism
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.82),
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(24),
-                  bottom: nextStep != null ? Radius.zero : const Radius.circular(24),
-                ),
-                border: Border.all(
-                  color: const Color(0xFF00E5FF).withValues(alpha: 0.6),
-                  width: 1.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00E5FF).withValues(alpha: 0.30),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00E5FF), Color(0xFF2979FF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                          blurRadius: 12,
-                          spreadRadius: 1,
-                        )
-                      ],
-                    ),
-                    child: Icon(
-                      _getManeuverIcon(currentStep!.modifier, currentStep!.type),
-                      color: Colors.white,
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          DistanceFormatter.formatDistance(currentStep!.distanceMeters),
-                          style: const TextStyle(
-                            color: Color(0xFF00E5FF),
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Text(
-                          currentStep!.instruction,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Banner Principal — Azul Marino Waze sólido
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1B4FD8), // Azul Waze puro
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(20),
+              bottom: nextStep != null ? Radius.zero : const Radius.circular(20),
             ),
-
-            // Sub-Banner Cyberpunk "Luego en X m [Maniobra]"
-            if (nextStep != null)
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x55000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Icono de maniobra en cuadro blanco redondeado
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                width: 58,
+                height: 58,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-                  ),
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(24),
-                  ),
-                  border: Border.all(
-                    color: const Color(0xFF3B82F6).withValues(alpha: 0.5),
-                    width: 1,
-                  ),
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
+                child: Icon(
+                  _getManeuverIcon(currentStep!.modifier, currentStep!.type),
+                  color: Colors.white,
+                  size: 38,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Distancia grande blanca
                     Text(
-                      'Luego en ${DistanceFormatter.formatDistance(nextStep!.distanceMeters)}',
+                      DistanceFormatter.formatDistance(
+                          currentStep!.distanceMeters),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        height: 1.0,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      _getManeuverIcon(nextStep!.modifier, nextStep!.type),
-                      color: const Color(0xFF60A5FA),
-                      size: 20,
+                    const SizedBox(height: 2),
+                    // Instrucción en blanco semi-transparente
+                    Text(
+                      currentStep!.instruction,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                      ),
                     ),
                   ],
                 ),
               ),
-          ],
+            ],
+          ),
         ),
-      ),
+
+        // Sub-Banner "Luego en..." — Azul oscuro Waze
+        if (nextStep != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1240B0), // Azul ligeramente más oscuro
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getManeuverIcon(nextStep!.modifier, nextStep!.type),
+                  color: Colors.white70,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Luego en ${DistanceFormatter.formatDistance(nextStep!.distanceMeters)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 

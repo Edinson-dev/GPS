@@ -13,39 +13,64 @@ class MapStyleSelectorSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final styles = [
-      {'name': 'Waze Día', 'icon': Icons.wb_sunny_rounded, 'desc': 'Antideslumbrante ligero', 'color': const Color(0xFF00C8FF)},
-      {'name': 'Cyberpunk Noche', 'icon': Icons.nightlight_round, 'desc': 'Fondo oscuro neón', 'color': const Color(0xFF8B5CF6)},
-      {'name': 'Satélite HD', 'icon': Icons.satellite_alt_rounded, 'desc': 'Fotografía aérea real', 'color': const Color(0xFF10B981)},
-      {'name': 'Tráfico 3D', 'icon': Icons.traffic_rounded, 'desc': 'Flujo vehicular en vivo', 'color': const Color(0xFFFF2E55)},
-      {'name': 'OLED Ahorro Batería', 'icon': Icons.battery_saver_rounded, 'desc': 'Negro puro para ruta larga', 'color': const Color(0xFF10B981)},
+      {
+        'name': 'Waze Día',
+        'icon': Icons.wb_sunny_rounded,
+        'desc': 'Mapa claro antideslumbrante',
+        'color': const Color(0xFF1B4FD8),
+      },
+      {
+        'name': 'Modo Noche',
+        'icon': Icons.nightlight_round,
+        'desc': 'Fondo oscuro para la noche',
+        'color': const Color(0xFF8B5CF6),
+      },
+      {
+        'name': 'Satélite HD',
+        'icon': Icons.satellite_alt_rounded,
+        'desc': 'Fotografía aérea real',
+        'color': const Color(0xFF10B981),
+      },
+      {
+        'name': 'Tráfico 3D',
+        'icon': Icons.traffic_rounded,
+        'desc': 'Flujo vehicular en vivo',
+        'color': const Color(0xFFFF3B30),
+      },
+      {
+        'name': 'OLED / Ahorro',
+        'icon': Icons.battery_saver_rounded,
+        'desc': 'Negro puro para ruta larga',
+        'color': const Color(0xFF333355),
+      },
     ];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: const Color(0xFF00C8FF).withValues(alpha: 0.4)),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Handle
           Center(
             child: Container(
               width: 40,
               height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white30,
+                color: const Color(0xFFDDDDE8),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          const SizedBox(height: 16),
           const Text(
-            'Estilo y Capa del Mapa',
+            'Estilo del mapa',
             style: TextStyle(
-              color: Colors.white,
+              color: Color(0xFF1A1A2E),
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -56,9 +81,9 @@ class MapStyleSelectorSheet extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisExtent: 80,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+              mainAxisExtent: 76,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
             ),
             itemCount: styles.length,
             itemBuilder: (context, idx) {
@@ -72,19 +97,24 @@ class MapStyleSelectorSheet extends StatelessWidget {
                   Navigator.pop(context);
                 },
                 borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? color.withValues(alpha: 0.25) : const Color(0xFF1E293B),
+                    color: isSelected ? color.withValues(alpha: 0.08) : const Color(0xFFF8F8FC),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? color : Colors.white12,
+                      color: isSelected ? color : const Color(0xFFE5E5F0),
                       width: isSelected ? 2 : 1,
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(st['icon'] as IconData, color: isSelected ? color : Colors.white70, size: 28),
+                      Icon(
+                        st['icon'] as IconData,
+                        color: isSelected ? color : const Color(0xFF666680),
+                        size: 26,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -94,7 +124,7 @@ class MapStyleSelectorSheet extends StatelessWidget {
                             Text(
                               st['name'] as String,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: isSelected ? color : const Color(0xFF1A1A2E),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -102,7 +132,7 @@ class MapStyleSelectorSheet extends StatelessWidget {
                             Text(
                               st['desc'] as String,
                               style: const TextStyle(
-                                color: Colors.white54,
+                                color: Color(0xFF999EB5),
                                 fontSize: 10,
                               ),
                               overflow: TextOverflow.ellipsis,

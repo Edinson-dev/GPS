@@ -175,23 +175,23 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
                       final pulseVal = _pulseAnimation.value;
                       return PolylineLayer(
                         polylines: [
-                          // Capa 1: Resplandor Neón Exterior (Glow) Respirante estilo Waze
+                          // Capa 1: Glow azul suave Waze
                           Polyline(
                             points: route.polylinePoints,
-                            color: const Color(0xFF00C8FF).withValues(alpha: 0.15 + (pulseVal * 0.35)),
-                            strokeWidth: 18.0 + (pulseVal * 4.0),
+                            color: const Color(0xFF1B4FD8).withValues(alpha: 0.20 + (pulseVal * 0.15)),
+                            strokeWidth: 20.0 + (pulseVal * 3.0),
                           ),
-                          // Capa 2: Línea Principal TomTom / Waze Azul Neón
+                          // Capa 2: Borde blanco para contraste con el mapa
                           Polyline(
                             points: route.polylinePoints,
-                            color: const Color(0xFF0070F3),
+                            color: Colors.white,
+                            strokeWidth: 13.0,
+                          ),
+                          // Capa 3: Línea principal azul Waze
+                          Polyline(
+                            points: route.polylinePoints,
+                            color: const Color(0xFF1B9CF4),
                             strokeWidth: 10.0,
-                          ),
-                          // Capa 3: Pulso Interno Fluyente Verde Esmeralda / Neón
-                          Polyline(
-                            points: route.polylinePoints,
-                            color: const Color(0xFF00E676).withValues(alpha: 0.5 + (pulseVal * 0.5)),
-                            strokeWidth: 4.0,
                           ),
                         ],
                       );
@@ -199,40 +199,54 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
                   ),
                 MarkerLayer(
                   markers: [
-                    // Puntero Chevron 3D TomTom Azul Eléctrico con Sombra de Profundidad
+                    // Marcador Chevron Azul Waze en Navegación
                     Marker(
                       point: currentPos,
-                      width: 64,
-                      height: 64,
+                      width: 70,
+                      height: 70,
                       child: Transform.rotate(
                         angle: _isFollowingGps ? 0.0 : currentHeadingRad,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
+                            // Halo difuso azul
                             Container(
-                              width: 56,
-                              height: 56,
+                              width: 64,
+                              height: 64,
                               decoration: BoxDecoration(
-                                color: (currentSpeed > navState.currentSpeedLimit ? const Color(0xFFFF2E55) : const Color(0xFF00C8FF)).withValues(alpha: 0.25),
+                                color: const Color(0xFF1B9CF4).withValues(
+                                  alpha: currentSpeed > navState.currentSpeedLimit ? 0.0 : 0.20,
+                                ),
                                 shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: (currentSpeed > navState.currentSpeedLimit ? const Color(0xFFFF2E55) : const Color(0xFF00C8FF)).withValues(alpha: 0.7),
-                                    blurRadius: 24,
-                                    spreadRadius: 6,
-                                  ),
-                                ],
                               ),
                             ),
-                            const Icon(
+                            // Halo rojo si excede velocidad
+                            if (currentSpeed > navState.currentSpeedLimit)
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF3B30).withValues(alpha: 0.22),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            // Chevron azul sólido
+                            Icon(
                               Icons.navigation_rounded,
-                              color: Color(0xFF00C8FF),
-                              size: 44,
-                            ),
-                            const Icon(
-                              Icons.navigation_rounded,
-                              color: Colors.white,
-                              size: 34,
+                              color: currentSpeed > navState.currentSpeedLimit
+                                  ? const Color(0xFFFF3B30)
+                                  : const Color(0xFF1B9CF4),
+                              size: 50,
+                              shadows: [
+                                Shadow(
+                                  color: (currentSpeed > navState.currentSpeedLimit
+                                      ? const Color(0xFFFF3B30)
+                                      : const Color(0xFF1B9CF4))
+                                    .withValues(alpha: 0.5),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -313,19 +327,31 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
             ),
           ),
 
-          // Lado Derecho: Botón Flotante "Centrar GPS"
+          // Lado Derecho: Botón Flotante "Centrar GPS" — blanco estilo Waze
           Positioned(
             bottom: 180,
             right: 16,
-            child: FloatingActionButton(
-              heroTag: 'recenter_gps_nav_fab',
-              onPressed: () => _recenterGps(currentPos, rawHeading),
-              backgroundColor: _isFollowingGps ? const Color(0xFF0070F3) : const Color(0xFF1E293B),
-              elevation: 6,
-              child: Icon(
-                _isFollowingGps ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
-                color: Colors.white,
-                size: 26,
+            child: GestureDetector(
+              onTap: () => _recenterGps(currentPos, rawHeading),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _isFollowingGps ? const Color(0xFF1B4FD8) : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isFollowingGps ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
+                  color: _isFollowingGps ? Colors.white : const Color(0xFF1B4FD8),
+                  size: 24,
+                ),
               ),
             ),
           ),
@@ -383,9 +409,10 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: const Color(0xFFFF1744).withValues(alpha: 0.65),
-                      width: 6,
+                      color: const Color(0xFFFF3B30).withValues(alpha: 0.55),
+                      width: 5,
                     ),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
