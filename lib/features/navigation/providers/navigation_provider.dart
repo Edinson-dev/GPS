@@ -177,6 +177,9 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     });
   }
 
+  bool _isRerouting = false;
+  DateTime? _lastRerouteTime;
+
   void _updateTrimmedRoute(UserLocation userLoc) {
     final route = state.selectedRoute;
     if (route == null) return;
@@ -196,8 +199,24 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       }
     }
 
-    // Si el usuario avanza por la ruta, recortar los puntos ya recorridos
-    if (closestIdx > 0 && closestIdx < pts.length - 1) {
+    // Detección de Desvío / Salida de la ruta (Off-Route > 40m): Auto-Rerouting
+    if (minDistance > 40.0 && state.destination != null && !_isRerouting) {
+      final now = DateTime.now();
+      if (_lastRerouteTime == null || now.difference(_lastRerouteTime!).inSeconds >= 5) {
+        _isRerouting = true;
+        _lastRerouteTime = now;
+        _ttsService.speakInstruction('Recalculando ruta...');
+        calculateRoutesTo(state.destination!, state.destinationName).then((_) {
+          _isRerouting = false;
+        }).catchError((_) {
+          _isRerouting = false;
+        });
+        return;
+      }
+    }
+
+    // Si el usuario avanza por la ruta (dentro del margen de 35 metros), recortar los puntos ya recorridos
+    if (minDistance <= 35.0 && closestIdx > 0 && closestIdx < pts.length - 1) {
       final remainingPts = [userLoc.position, ...pts.sublist(closestIdx)];
       final updatedRoute = route.copyWith(polylinePoints: remainingPts);
       state = state.copyWith(selectedRoute: updatedRoute);

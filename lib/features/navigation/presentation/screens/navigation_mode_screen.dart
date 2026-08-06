@@ -127,7 +127,8 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
               children: [
                 TileLayer(
                   urlTemplate:
-                      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.waypulse.waypulse_app',
                   tileProvider: CancellableNetworkTileProvider(),

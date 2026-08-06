@@ -167,7 +167,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         );
       }
 
-      if (next.selectedRoute != null && next.destination != null && previous?.selectedRoute != next.selectedRoute) {
+      final isNewRouteSelected = next.selectedRoute != null &&
+          next.destination != null &&
+          (previous?.selectedRoute == null ||
+              previous?.destination != next.destination ||
+              previous?.selectedRoute?.id != next.selectedRoute?.id);
+
+      if (isNewRouteSelected) {
         _fitRouteBounds(
           next.currentLocation?.position ?? const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng),
           next.destination!,
