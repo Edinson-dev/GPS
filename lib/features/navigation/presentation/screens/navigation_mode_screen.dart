@@ -24,8 +24,10 @@ class NavigationModeScreen extends ConsumerStatefulWidget {
   ConsumerState<NavigationModeScreen> createState() => _NavigationModeScreenState();
 }
 
-class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
+class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> with TickerProviderStateMixin {
   late final MapController _mapController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
   bool _isFollowingGps = true;
   Timer? _autoRecenterTimer;
   final TtsVoiceService _ttsService = TtsVoiceService();
@@ -35,11 +37,20 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
   void initState() {
     super.initState();
     _mapController = MapController();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
     _autoRecenterTimer?.cancel();
+    _pulseController.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -65,7 +76,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     setState(() {
       _isFollowingGps = true;
     });
-    _mapController.move(currentPos, 17.8);
+    _mapController.move(currentPos, 18.3);
     _mapController.rotate(-heading);
   }
 
@@ -100,7 +111,15 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     // Escuchar movimiento continuo del GPS para actualizar cámara en orientación Heading-Up (TomTom 3D)
     ref.listen(navigationProvider, (previous, next) {
       if (_isFollowingGps && next.currentLocation != null) {
-        _mapController.move(next.currentLocation!.position, _mapController.camera.zoom);
+        // Zoom Adaptativo Inmersivo según velocidad
+        double adaptiveZoom = 18.3;
+        final spd = next.currentLocation!.speedKmh;
+        if (spd > 65.0) {
+          adaptiveZoom = 17.3; // Carretera rápida: ampliar visión
+        } else if (spd < 20.0) {
+          adaptiveZoom = 18.5; // Detención / Giros: visión ultra-cercana
+        }
+        _mapController.move(next.currentLocation!.position, adaptiveZoom);
         _mapController.rotate(-(next.currentLocation!.heading));
       }
     });
@@ -108,14 +127,14 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Visor de Navegación 3D en Perspectiva TomTom GO (Zoom 18.5 Heading-Up)
+          // Visor de Navegación 3D en Perspectiva TomTom GO (Zoom Inmersivo 18.3 Heading-Up)
           Positioned.fill(
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: currentPos,
-                initialZoom: 17.8,
-                maxZoom: 18.5,
+                initialZoom: 18.3,
+                maxZoom: 19.0,
                 minZoom: 3.0,
                 initialRotation: -rawHeading,
                 onPositionChanged: (position, hasGesture) {
@@ -139,21 +158,33 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> {
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 100)),
                 ),
                 if (route != null)
-                  PolylineLayer(
-                    polylines: [
-                      // Línea principal de ruta TomTom Azul Neón
-                      Polyline(
-                        points: route.polylinePoints,
-                        color: const Color(0xFF0070F3),
-                        strokeWidth: 11.0,
-                      ),
-                      // Tramo de tráfico activo en verde sobre la ruta libre
-                      Polyline(
-                        points: route.polylinePoints,
-                        color: const Color(0xFF10B981),
-                        strokeWidth: 4.0,
-                      ),
-                    ],
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, _) {
+                      final pulseVal = _pulseAnimation.value;
+                      return PolylineLayer(
+                        polylines: [
+                          // Capa 1: Resplandor Neón Exterior (Glow) Respirante estilo Waze
+                          Polyline(
+                            points: route.polylinePoints,
+                            color: const Color(0xFF00C8FF).withValues(alpha: 0.15 + (pulseVal * 0.35)),
+                            strokeWidth: 18.0 + (pulseVal * 4.0),
+                          ),
+                          // Capa 2: Línea Principal TomTom / Waze Azul Neón
+                          Polyline(
+                            points: route.polylinePoints,
+                            color: const Color(0xFF0070F3),
+                            strokeWidth: 10.0,
+                          ),
+                          // Capa 3: Pulso Interno Fluyente Verde Esmeralda / Neón
+                          Polyline(
+                            points: route.polylinePoints,
+                            color: const Color(0xFF00E676).withValues(alpha: 0.5 + (pulseVal * 0.5)),
+                            strokeWidth: 4.0,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 MarkerLayer(
                   markers: [

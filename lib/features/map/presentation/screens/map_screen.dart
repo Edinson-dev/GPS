@@ -35,8 +35,10 @@ class MapScreen extends ConsumerStatefulWidget {
   ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends ConsumerState<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateMixin {
   late final MapController _mapController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
   final SpeedCameraApiService _cameraApiService = SpeedCameraApiService();
   final CaravanService _caravanService = CaravanService();
 
@@ -71,6 +73,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     _mapController = MapController();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    );
+
     _loadLiveSpeedCameras();
     _caravanService.membersStream.listen((members) {
       if (mounted) {
@@ -122,6 +133,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void dispose() {
     _autoRecenterTimer?.cancel();
+    _pulseController.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -273,17 +285,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ],
                   ),
                 if (navState.selectedRoute != null) ...[
-                  PolylineLayer(
-                    polylines: [
-                      // Línea principal de ruta Waze Neón Cian
-                      Polyline(
-                        points: navState.selectedRoute!.polylinePoints,
-                        color: const Color(0xFF00C8FF),
-                        strokeWidth: 8.0,
-                      ),
-                      // Trazado de segmento rojo para tráfico pesado / accidentes
-                      ...trafficLines,
-                    ],
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, _) {
+                      final pulseVal = _pulseAnimation.value;
+                      return PolylineLayer(
+                        polylines: [
+                          // Capa 1: Resplandor Neón Exterior (Glow) Waze
+                          Polyline(
+                            points: navState.selectedRoute!.polylinePoints,
+                            color: const Color(0xFF00C8FF).withValues(alpha: 0.15 + (pulseVal * 0.35)),
+                            strokeWidth: 16.0 + (pulseVal * 4.0),
+                          ),
+                          // Capa 2: Línea Principal Waze Neón Cian
+                          Polyline(
+                            points: navState.selectedRoute!.polylinePoints,
+                            color: const Color(0xFF00C8FF),
+                            strokeWidth: 8.0,
+                          ),
+                          // Capa 3: Pulso Interno Fluyente Verde Esmeralda
+                          Polyline(
+                            points: navState.selectedRoute!.polylinePoints,
+                            color: const Color(0xFF00E676).withValues(alpha: 0.5 + (pulseVal * 0.5)),
+                            strokeWidth: 3.5,
+                          ),
+                          // Trazado de segmento rojo para tráfico pesado / accidentes
+                          ...trafficLines,
+                        ],
+                      );
+                    },
                   ),
                 ],
                 MarkerLayer(
