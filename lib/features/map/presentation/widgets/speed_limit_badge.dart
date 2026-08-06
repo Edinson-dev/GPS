@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class SpeedLimitBadge extends StatelessWidget {
@@ -16,54 +17,59 @@ class SpeedLimitBadge extends StatelessWidget {
     final bool isNearLimit = !isSpeeding && (speedLimitKmh - currentSpeedKmh <= 5) && currentSpeedKmh > 0;
 
     final Color badgeColor = isSpeeding
-        ? const Color(0xFFFF2E55)
+        ? const Color(0xFFFF1744)
         : isNearLimit
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFF10B981);
+            ? const Color(0xFFFF9100)
+            : const Color(0xFF00E676);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Velocímetro Actual Estilo Cockpit Deportivo
-        Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF0F172A),
-            border: Border.all(
-              color: badgeColor,
-              width: 3.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: badgeColor.withValues(alpha: 0.5),
-                blurRadius: 16,
-                spreadRadius: 3,
-              )
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                currentSpeedKmh.round().toString(),
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
+        // Velocímetro Actual Cyberpunk Glassmorphism
+        ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF0F172A).withValues(alpha: 0.82),
+                border: Border.all(
                   color: badgeColor,
-                  letterSpacing: -0.5,
+                  width: 3.5,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: badgeColor.withValues(alpha: 0.6),
+                    blurRadius: 18,
+                    spreadRadius: 3,
+                  )
+                ],
               ),
-              const Text(
-                'km/h',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white70,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    currentSpeedKmh.round().toString(),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: badgeColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const Text(
+                    'km/h',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         const SizedBox(height: 8),
