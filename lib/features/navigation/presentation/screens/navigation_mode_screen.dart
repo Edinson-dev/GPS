@@ -32,6 +32,7 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
   Timer? _autoRecenterTimer;
   final TtsVoiceService _ttsService = TtsVoiceService();
   int _lastSpokenStepIndex = -1;
+  DateTime? _lastSpeedingVoiceAlertTime;
 
   @override
   void initState() {
@@ -105,6 +106,16 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
         const LatLng(MapboxConstants.defaultLat, MapboxConstants.defaultLng);
     final rawHeading = navState.currentLocation?.heading ?? 0.0;
     final currentHeadingRad = rawHeading * (3.141592653589793 / 180.0);
+
+    // Alerta de Voz por Exceso de Velocidad (> Límite permitido)
+    final isSpeeding = currentSpeed > navState.currentSpeedLimit && currentSpeed > 10.0;
+    if (isSpeeding) {
+      final now = DateTime.now();
+      if (_lastSpeedingVoiceAlertTime == null || now.difference(_lastSpeedingVoiceAlertTime!).inSeconds >= 12) {
+        _lastSpeedingVoiceAlertTime = now;
+        _ttsService.speakInstruction('Atención: estás excediendo el límite de velocidad de ${navState.currentSpeedLimit.toInt()} kilómetros por hora.');
+      }
+    }
 
     final topInset = MediaQuery.of(context).padding.top + 10;
 
@@ -366,6 +377,19 @@ class _NavigationModeScreenState extends ConsumerState<NavigationModeScreen> wit
               },
             ),
           ),
+          if (isSpeeding)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFFFF1744).withValues(alpha: 0.65),
+                      width: 6,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
